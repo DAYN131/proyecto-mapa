@@ -1,0 +1,133 @@
+<div class="eventos-container">
+
+  <!-- Header -->
+  <div class="eventos-header">
+    <div class="header-left">
+      <h1>🎪 Gestión de Eventos</h1>
+      <span class="total-badge">{{ eventosFiltrados.length }} eventos</span>
+    </div>
+    <button class="btn-agregar" (click)="abrirFormulario()">
+      + Nuevo Evento
+    </button>
+  </div>
+
+  <!-- Barra de búsqueda y filtros -->
+  <div class="toolbar">
+    <input
+      class="buscador"
+      type="text"
+      placeholder="Buscar por nombre o lugar..."
+      [(ngModel)]="busqueda"
+    />
+    <div class="filtros-tipo">
+      <button
+        *ngFor="let t of ['todos', ...tipos]"
+        class="chip"
+        [class.active]="filtroTabla === t"
+        (click)="filtroTabla = t"
+      >
+        {{ t === 'todos' ? 'Todos' : getEmojiTipo(t) + ' ' + t }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="tabla-wrapper">
+    <table class="tabla-eventos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+          <th>Lugar</th>
+          <th>Descripción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let evento of eventosFiltrados; let i = index">
+          <td class="td-id">{{ i + 1 }}</td>
+          <td class="td-nombre">{{ evento.nombre }}</td>
+          <td>
+            <span class="badge-tipo" [style.background]="getColorTipo(evento.tipo)">
+              {{ getEmojiTipo(evento.tipo) }} {{ evento.tipo }}
+            </span>
+          </td>
+          <td>{{ evento.fecha }}</td>
+          <td class="td-lugar">{{ evento.lugar }}</td>
+          <td class="td-desc">{{ evento.descripcion }}</td>
+          <td>
+            <button class="btn-eliminar" (click)="eliminarEvento(evento.id)">✕</button>
+          </td>
+        </tr>
+        <tr *ngIf="eventosFiltrados.length === 0">
+          <td colspan="7" class="td-empty">No se encontraron eventos.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal formulario -->
+  <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
+    <div class="modal-form" (click)="$event.stopPropagation()">
+
+      <div class="modal-form-header">
+        <h2>Nuevo Evento</h2>
+        <button class="btn-cerrar" (click)="cerrarFormulario()">✕</button>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="form-group full">
+          <label>Nombre *</label>
+          <input type="text" [(ngModel)]="nuevoEvento.nombre" placeholder="Nombre del evento" />
+        </div>
+
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select [(ngModel)]="nuevoEvento.tipo">
+            <option *ngFor="let t of tipos" [value]="t">{{ getEmojiTipo(t) }} {{ t }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input type="date" [(ngModel)]="nuevoEvento.fecha" />
+        </div>
+
+        <div class="form-group full">
+          <label>Lugar *</label>
+          <input type="text" [(ngModel)]="nuevoEvento.lugar" placeholder="Nombre del lugar" />
+        </div>
+
+        <div class="form-group">
+          <label>Latitud</label>
+          <input type="number" [(ngModel)]="nuevoEvento.lat" placeholder="19.4326" step="0.0001" />
+        </div>
+
+        <div class="form-group">
+          <label>Longitud</label>
+          <input type="number" [(ngModel)]="nuevoEvento.lng" placeholder="-99.1332" step="0.0001" />
+        </div>
+
+        <div class="form-group full">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="nuevoEvento.descripcion" rows="3" placeholder="Descripción breve del evento"></textarea>
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancelar" (click)="cerrarFormulario()">Cancelar</button>
+        <button class="btn-guardar"
+          (click)="agregarEvento()"
+          [disabled]="!nuevoEvento.nombre || !nuevoEvento.fecha || !nuevoEvento.lugar">
+          Guardar Evento
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

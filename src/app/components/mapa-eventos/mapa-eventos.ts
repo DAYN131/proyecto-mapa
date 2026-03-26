@@ -1,9 +1,8 @@
 // src/app/components/mapa-eventos/mapa-eventos.ts
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router'; // 👈 IMPORTAR Router
+import { Router } from '@angular/router';
 
-// Declarar variable L sin importar al inicio
 declare let L: any;
 
 @Component({
@@ -15,75 +14,125 @@ declare let L: any;
 })
 export class MapaEventosComponent implements OnInit {
 
-  // Propiedades del menú
   menuVisible: boolean = false;
-
-  // Propiedades del modal
-  modalVisible: boolean = false;
-  eventoSeleccionado: any = null;
-
-  // Propiedades de filtros
   filtroActivo: string = 'todos';
   mostrarSecciones: boolean = true;
 
-  // Mapa
   mapa: any;
   marcadores: any[] = [];
   private isBrowser: boolean;
 
-  // Datos de ejemplo
   eventos: any[] = [
+    // Conciertos
     {
       id: 1,
-      nombre: 'Concierto Rock',
+      nombre: 'Concierto Rock Nacional',
       tipo: 'concierto',
-      fecha: '2024-04-15',
-      descripcion: 'Gran concierto de rock',
-      lat: 19.4326,
-      lng: -99.1332
+      fecha: '2024-05-10',
+      descripcion: 'Los mejores grupos de rock mexicano en un solo escenario.',
+      lugar: 'Foro Sol, CDMX',
+      lat: 19.3574,
+      lng: -99.0855
     },
     {
       id: 2,
-      nombre: 'Obra de Teatro',
-      tipo: 'teatro',
-      fecha: '2024-04-20',
-      descripcion: 'Obra teatral',
-      lat: 19.4326,
-      lng: -99.1332
+      nombre: 'Noche de Jazz',
+      tipo: 'concierto',
+      fecha: '2024-05-18',
+      descripcion: 'Una velada íntima con los mejores jazzistas del país.',
+      lugar: 'El Plaza Condesa, CDMX',
+      lat: 19.4103,
+      lng: -99.1722
     },
+    // Teatro
     {
       id: 3,
-      nombre: 'Festival de Música',
-      tipo: 'festival',
-      fecha: '2024-05-01',
-      descripcion: 'Festival de música electrónica',
-      lat: 19.4326,
-      lng: -99.1332
+      nombre: 'Obra: La Casa de Bernarda Alba',
+      tipo: 'teatro',
+      fecha: '2024-05-12',
+      descripcion: 'Clásico de Federico García Lorca en una producción contemporánea.',
+      lugar: 'Teatro de los Insurgentes, CDMX',
+      lat: 19.3762,
+      lng: -99.1703
     },
     {
       id: 4,
-      nombre: 'Taller de Arte',
-      tipo: 'taller',
-      fecha: '2024-04-25',
-      descripcion: 'Taller de pintura',
-      lat: 19.4326,
-      lng: -99.1332
+      nombre: 'Comedia: ¡Qué familia!',
+      tipo: 'teatro',
+      fecha: '2024-05-20',
+      descripcion: 'Una obra de comedia ligera para toda la familia.',
+      lugar: 'Teatro Hidalgo, CDMX',
+      lat: 19.4354,
+      lng: -99.1437
     },
+    // Festivales
     {
       id: 5,
-      nombre: 'Exposición de Fotografía',
+      nombre: 'Festival Coordenada',
+      tipo: 'festival',
+      fecha: '2024-06-01',
+      descripcion: 'Festival de música indie y alternativa con artistas nacionales e internacionales.',
+      lugar: 'Expo Guadalajara',
+      lat: 20.6597,
+      lng: -103.3496
+    },
+    {
+      id: 6,
+      nombre: 'Festival de Cultura Urbana',
+      tipo: 'festival',
+      fecha: '2024-05-25',
+      descripcion: 'Arte urbano, música y gastronomía en el corazón de la ciudad.',
+      lugar: 'Parque Bicentenario, CDMX',
+      lat: 19.4454,
+      lng: -99.2011
+    },
+    // Talleres
+    {
+      id: 7,
+      nombre: 'Taller de Acuarela',
+      tipo: 'taller',
+      fecha: '2024-05-15',
+      descripcion: 'Aprende técnicas básicas y avanzadas de pintura en acuarela.',
+      lugar: 'Centro Cultural Bella Época, CDMX',
+      lat: 19.4124,
+      lng: -99.1691
+    },
+    {
+      id: 8,
+      nombre: 'Taller de Escritura Creativa',
+      tipo: 'taller',
+      fecha: '2024-05-22',
+      descripcion: 'Desarrolla tu voz narrativa con ejercicios prácticos guiados.',
+      lugar: 'Biblioteca Vasconcelos, CDMX',
+      lat: 19.4474,
+      lng: -99.1509
+    },
+    // Exposiciones
+    {
+      id: 9,
+      nombre: 'Exposición: Frida & Diego',
       tipo: 'exposicion',
-      fecha: '2024-04-18',
-      descripcion: 'Exposición de fotografía urbana',
-      lat: 19.4326,
-      lng: -99.1332
+      fecha: '2024-05-01',
+      descripcion: 'Muestra de obras y fotografías históricas de dos íconos del arte mexicano.',
+      lugar: 'Museo Frida Kahlo, CDMX',
+      lat: 19.3552,
+      lng: -99.1627
+    },
+    {
+      id: 10,
+      nombre: 'Fotografía Contemporánea MX',
+      tipo: 'exposicion',
+      fecha: '2024-05-08',
+      descripcion: 'Selección de los mejores fotógrafos mexicanos de la última década.',
+      lugar: 'Centro de la Imagen, CDMX',
+      lat: 19.4285,
+      lng: -99.1364
     }
   ];
 
-  // 👈 AGREGAR Router en el constructor
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-              private router: Router  // 👈 INYECTAR Router
+              private router: Router
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
@@ -95,147 +144,200 @@ export class MapaEventosComponent implements OnInit {
     }
   }
 
-  // 👈 MÉTODO PARA NAVEGAR A ASISTENTES (SOLO UNO, ELIMINAR EL DUPLICADO)
+  // ──────────────────────────────────────────────
+  // Menú
+  // ──────────────────────────────────────────────
+
+  onMenuButtonClick(event: Event) {
+    event.stopPropagation();
+    this.menuVisible = !this.menuVisible;
+  }
+
   abrirModalAsistentes() {
     this.menuVisible = false;
     this.router.navigate(['/asistentes']);
   }
 
-  // 👈 MÉTODO PARA NAVEGAR A EVENTOS
   abrirModalEventos() {
     this.menuVisible = false;
     this.router.navigate(['/eventos']);
   }
 
-  // 👈 MÉTODO PARA ESTADÍSTICAS
   abrirModalEstadisticas() {
     this.menuVisible = false;
     alert('Estadísticas - Próximamente');
   }
 
-  private async cargarLeafletSiEsNecesario() {
-    if (typeof L === 'undefined') {
-      return new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => {
-        resolve(true);
-      };
-      document.head.appendChild(script);
-      });
-    }
-    return true;
-  }
+  // ──────────────────────────────────────────────
+  // Filtros — solo actualizan marcadores en el mapa
+  // ──────────────────────────────────────────────
 
-  // Método para alternar el menú
-  toggleMenu() {
-    this.menuVisible = !this.menuVisible;
-  }
-
-  // Método para cerrar modal
-  cerrarModal() {
-    this.modalVisible = false;
-    this.eventoSeleccionado = null;
-  }
-
-  // Método para filtrar eventos
   filtrarEventos(tipo: string) {
     this.filtroActivo = tipo;
     if (this.isBrowser) {
-      this.actualizarMapa();
+      this.actualizarMarcadores();
     }
   }
 
-  // Método para mostrar/ocultar secciones
   mostrarOcultarSecciones() {
     this.mostrarSecciones = !this.mostrarSecciones;
   }
 
-  // Método para actualizar el mapa según filtros
-  actualizarMapa() {
+  // ──────────────────────────────────────────────
+  // Mapa
+  // ──────────────────────────────────────────────
+
+  private async cargarLeafletSiEsNecesario(): Promise<any> {
+    if (typeof L !== 'undefined') return true;
+
+    return new Promise((resolve) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve(true);
+      document.head.appendChild(script);
+    });
+  }
+
+  inicializarMapa() {
+    if (!this.isBrowser || typeof L === 'undefined') return;
+
+    setTimeout(() => {
+      const mapElement = document.getElementById('map');
+      if (!mapElement) return;
+
+      this.mapa = L.map('map').setView([19.4326, -99.1332], 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(this.mapa);
+
+      this.actualizarMarcadores();
+
+      window.addEventListener('resize', () => {
+        this.mapa?.invalidateSize();
+      });
+    }, 100);
+  }
+
+  actualizarMarcadores() {
     if (!this.isBrowser || !this.mapa || typeof L === 'undefined') return;
 
-    // Limpiar marcadores existentes
-    this.marcadores.forEach(marcador => {
-      this.mapa.removeLayer(marcador);
-    });
+    // Limpiar marcadores anteriores
+    this.marcadores.forEach(m => this.mapa.removeLayer(m));
     this.marcadores = [];
 
-    // Filtrar eventos según el filtro activo
     const eventosFiltrados = this.filtroActivo === 'todos'
     ? this.eventos
     : this.eventos.filter(e => e.tipo === this.filtroActivo);
 
-    // Agregar nuevos marcadores
     eventosFiltrados.forEach(evento => {
-      const marker = L.marker([evento.lat, evento.lng]).addTo(this.mapa);
-      marker.bindPopup(`
-      <b>${evento.nombre}</b><br>
-      ${evento.descripcion}<br>
-      <b>Fecha:</b> ${evento.fecha}<br>
-      <b>Tipo:</b> ${evento.tipo}
-      `);
-      this.marcadores.push(marker);
+      const icono = this.crearIconoTipo(evento.tipo);
 
-      // Evento click en marcador
-      marker.on('click', () => {
-        this.eventoSeleccionado = evento;
-        this.modalVisible = true;
-      });
+      const marker = L.marker([evento.lat, evento.lng], { icon: icono })
+      .addTo(this.mapa);
+
+      // Solo popup nativo de Leaflet — sin modal, sin estado compartido
+      marker.bindPopup(`
+      <div style="min-width:200px; font-family: sans-serif;">
+      <div style="font-weight:600; font-size:14px; margin-bottom:4px;">
+      ${this.getEmojiTipo(evento.tipo)} ${evento.nombre}
+      </div>
+      <div style="font-size:12px; color:#555; margin-bottom:6px;">
+      📍 ${evento.lugar}
+      </div>
+      <div style="font-size:12px; margin-bottom:4px;">
+      🗓️ ${evento.fecha}
+      </div>
+      <div style="font-size:12px; color:#333;">
+      ${evento.descripcion}
+      </div>
+      <div style="margin-top:6px;">
+      <span style="
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:12px;
+      font-size:11px;
+      font-weight:600;
+      background:${this.getColorTipo(evento.tipo)};
+      color:#fff;
+      ">${evento.tipo}</span>
+      </div>
+      </div>
+      `, { maxWidth: 260 });
+
+      this.marcadores.push(marker);
+    });
+  }
+
+  // ──────────────────────────────────────────────
+  // Helpers de íconos y colores por tipo
+  // ──────────────────────────────────────────────
+
+  getEmojiTipo(tipo: string): string {
+    const map: { [k: string]: string } = {
+      concierto:  '🎵',
+      teatro:     '🎭',
+      festival:   '🎪',
+      taller:     '🎨',
+      exposicion: '📷',
+    };
+    return map[tipo] ?? '📅';
+  }
+
+  getColorTipo(tipo: string): string {
+    const map: { [k: string]: string } = {
+      concierto:  '#E24B4A',
+      teatro:     '#7F77DD',
+      festival:   '#EF9F27',
+      taller:     '#1D9E75',
+      exposicion: '#378ADD',
+    };
+    return map[tipo] ?? '#888';
+  }
+
+  crearIconoTipo(tipo: string): any {
+    if (typeof L === 'undefined') return null;
+
+    const color = this.getColorTipo(tipo);
+    const emoji = this.getEmojiTipo(tipo);
+
+    return L.divIcon({
+      className: '',
+      html: `
+      <div style="
+      background:${color};
+      width:36px; height:36px;
+      border-radius:50% 50% 50% 0;
+      transform: rotate(-45deg);
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display:flex; align-items:center; justify-content:center;
+      ">
+      <span style="transform:rotate(45deg); font-size:16px; line-height:1;">
+      ${emoji}
+      </span>
+      </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -38]
     });
   }
 
   getEventoIcon(tipo: string): string {
-    const iconos: { [key: string]: string } = {
-      'concierto': 'fa-music',
-      'teatro': 'fa-masks-theater',
-      'festival': 'fa-star',
-      'taller': 'fa-palette',
-      'exposicion': 'fa-camera',
-      'fiesta': 'fa-champagne-glasses'
+    const map: { [k: string]: string } = {
+      concierto:  'fa-music',
+      teatro:     'fa-masks-theater',
+      festival:   'fa-star',
+      taller:     'fa-palette',
+      exposicion: 'fa-camera',
     };
-    return iconos[tipo] || 'fa-calendar-days';
-  }
-
-  // Método para inicializar el mapa
-  inicializarMapa() {
-    if (!this.isBrowser || typeof L === 'undefined') return;
-
-    // Esperar a que el DOM esté listo
-    setTimeout(() => {
-      const mapElement = document.getElementById('map');
-      if (mapElement && typeof L !== 'undefined') {
-        // Configurar el mapa
-        this.mapa = L.map('map').setView([19.4326, -99.1332], 12);
-
-        // Agregar capa de tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          maxZoom: 19
-        }).addTo(this.mapa);
-
-        // Agregar marcadores iniciales
-        this.actualizarMapa();
-
-        // Manejar redimensionamiento de ventana
-        window.addEventListener('resize', () => {
-          if (this.mapa) {
-            this.mapa.invalidateSize();
-          }
-        });
-      }
-    }, 100);
-  }
-
-  // Método para crear icono personalizado
-  crearIconoPersonalizado(color: string = 'red'): any {
-    if (!this.isBrowser || typeof L === 'undefined') return null;
-
-    return L.divIcon({
-      className: 'custom-div-icon',
-      html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
-                     iconSize: [20, 20],
-                     popupAnchor: [0, -10]
-    });
+    return map[tipo] ?? 'fa-calendar-days';
   }
 }

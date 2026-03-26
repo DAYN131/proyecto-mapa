@@ -1,96 +1,64 @@
 <div class="mapa-eventos-container">
-  <!-- Header con menú mejorado -->
+
+  <!-- Header -->
   <div class="header">
     <div class="logo">
       <i class="icon-location"></i>
       <h1>Eventos Culturales</h1>
     </div>
     <div class="dropdown">
-      <button class="btn-primary dropdown-toggle" (click)="toggleMenu()">
+      <button class="btn-primary dropdown-toggle" (click)="onMenuButtonClick($event)">
         <i class="icon-menu"></i> Menú
       </button>
       <ul class="dropdown-menu" [class.show]="menuVisible">
-        <li><a (click)="abrirModalEventos()"> Lista de Eventos</a></li>
-        <li><a (click)="abrirModalAsistentes()"> Asistentes</a></li>
+        <li><a (click)="abrirModalEventos()">Lista de Eventos</a></li>
+        <li><a (click)="abrirModalAsistentes()">Asistentes</a></li>
         <li><a (click)="abrirModalEstadisticas()">Estadísticas</a></li>
       </ul>
     </div>
   </div>
 
-  <!-- Filtros mejorados -->
+  <!-- Filtros -->
   <div class="filtros">
-    <button (click)="filtrarEventos('todos')" [class.active]="filtroActivo === 'todos'" class="filter-btn">
+    <button (click)="filtrarEventos('todos')"
+            [class.active]="filtroActivo === 'todos'"
+            class="filter-btn">
       <i class="icon-all"></i> Todos
     </button>
-    <button (click)="filtrarEventos('concierto')" [class.active]="filtroActivo === 'concierto'" class="filter-btn">
+    <button (click)="filtrarEventos('concierto')"
+            [class.active]="filtroActivo === 'concierto'"
+            class="filter-btn">
       <i class="icon-music"></i> Conciertos
     </button>
-    <button (click)="filtrarEventos('teatro')" [class.active]="filtroActivo === 'teatro'" class="filter-btn">
+    <button (click)="filtrarEventos('teatro')"
+            [class.active]="filtroActivo === 'teatro'"
+            class="filter-btn">
       <i class="icon-theater"></i> Teatro
     </button>
-    <button (click)="filtrarEventos('exposicion')" [class.active]="filtroActivo === 'exposicion'" class="filter-btn">
+    <button (click)="filtrarEventos('exposicion')"
+            [class.active]="filtroActivo === 'exposicion'"
+            class="filter-btn">
       <i class="icon-art"></i> Exposiciones
     </button>
-    <button (click)="filtrarEventos('taller')" [class.active]="filtroActivo === 'taller'" class="filter-btn">
+    <button (click)="filtrarEventos('taller')"
+            [class.active]="filtroActivo === 'taller'"
+            class="filter-btn">
       <i class="icon-workshop"></i> Talleres
     </button>
-    <button (click)="filtrarEventos('festival')" [class.active]="filtroActivo === 'festival'" class="filter-btn">
+    <button (click)="filtrarEventos('festival')"
+            [class.active]="filtroActivo === 'festival'"
+            class="filter-btn">
       <i class="icon-festival"></i> Festivales
     </button>
   </div>
 
-  <!-- Botón mostrar/ocultar secciones mejorado -->
+  <!-- Botón zonas -->
   <button (click)="mostrarOcultarSecciones()" class="toggle-section">
     <i [class]="mostrarSecciones ? 'icon-eye-off' : 'icon-eye'"></i>
     {{ mostrarSecciones ? 'Ocultar' : 'Mostrar' }} Zonas
   </button>
 
-  <!-- Mapa -->
+  <!-- Mapa — los popups los maneja Leaflet directamente -->
   <div id="map"></div>
 
-  <!-- Modal mejorado -->
-  <div class="modal" *ngIf="modalVisible" (click)="cerrarModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <span class="close" (click)="cerrarModal()">&times;</span>
-      </div>
-      <div *ngIf="eventoSeleccionado" class="evento-detalle">
-        <div class="evento-icon"></div>
-        <h2>{{ eventoSeleccionado.nombre }}</h2>
-        <div class="evento-info">
-          <div class="info-item">
-            <span class="info-label"> Tipo:</span>
-            <span class="info-value">{{ eventoSeleccionado.tipo }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Fecha:</span>
-            <span class="info-value">{{ eventoSeleccionado.fecha }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label"> Descripción:</span>
-            <span class="info-value">{{ eventoSeleccionado.descripcion }}</span>
-          </div>
-        </div>
-      </div>
-      <div *ngIf="!eventoSeleccionado" class="eventos-lista-container">
-        <h2>🎪 Lista de Eventos</h2>
-        <ul class="eventos-lista">
-          <li *ngFor="let evento of eventos" (click)="eventoSeleccionado = evento">
-            <div class="evento-card">
-              <i class="fa-solid {{ getEventoIcon(evento.tipo) }}"></i>
-              <div class="evento-card-content">
-                <strong>{{ evento.nombre }}</strong>
-                <div class="evento-card-meta">
-                  <span class="fecha">{{ evento.fecha }}</span>
-                  <span class="tipo">{{ evento.tipo }}</span>
-                </div>
-              </div>
-              <div class="evento-card-arrow">→</div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
 </div>
-

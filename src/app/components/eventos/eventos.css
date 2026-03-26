@@ -1,0 +1,238 @@
+.eventos-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+
+/* Header */
+.eventos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-left h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.total-badge {
+  background: #f0f0f0;
+  color: #555;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.buscador {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+.buscador:focus { border-color: #378ADD; }
+
+.filtros-tipo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  text-transform: capitalize;
+}
+.chip:hover { border-color: #999; }
+.chip.active {
+  background: #1a1a2e;
+  color: #fff;
+  border-color: #1a1a2e;
+}
+
+/* Botón agregar */
+.btn-agregar {
+  padding: 10px 20px;
+  background: #1D9E75;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-agregar:hover { background: #178a64; }
+
+/* Tabla */
+.tabla-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+}
+.tabla-eventos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.tabla-eventos thead tr {
+  background: #f8f8f8;
+}
+.tabla-eventos th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: #444;
+  border-bottom: 1px solid #e5e5e5;
+  white-space: nowrap;
+}
+.tabla-eventos td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+  color: #333;
+}
+.tabla-eventos tbody tr:hover { background: #fafafa; }
+.tabla-eventos tbody tr:last-child td { border-bottom: none; }
+
+.td-id    { color: #aaa; width: 40px; }
+.td-nombre { font-weight: 500; }
+.td-lugar  { color: #555; font-size: 13px; }
+.td-desc   { color: #777; font-size: 12px; max-width: 200px; }
+.td-empty  { text-align: center; padding: 40px; color: #aaa; }
+
+.badge-tipo {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.btn-eliminar {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #E24B4A;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.btn-eliminar:hover {
+  background: #fff0f0;
+  border-color: #E24B4A;
+}
+
+/* Modal formulario */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-form {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.modal-form-header h2 { margin: 0; font-size: 18px; }
+.btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.btn-cerrar:hover { background: #f0f0f0; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 20px 24px;
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 13px; font-weight: 600; color: #444; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: #378ADD; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 24px 20px;
+}
+.btn-cancelar {
+  padding: 9px 18px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-cancelar:hover { background: #e5e5e5; }
+.btn-guardar {
+  padding: 9px 20px;
+  background: #1D9E75;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn-guardar:hover:not(:disabled) { background: #178a64; }
+.btn-guardar:disabled { background: #aaa; cursor: not-allowed; }
