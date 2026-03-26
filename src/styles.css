@@ -1,1 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
+/* Importar Leaflet CSS desde CDN o node_modules */
+@import 'leaflet/dist/leaflet.css';
+
+/* Tus estilos globales */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}

@@ -1,0 +1,22 @@
+/* Elimina la línea de importación de Leaflet - no la necesitas aquí */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Estilo para el contenedor del mapa */
+#map {
+height: 500px;
+width: 100%;
+margin-top: 20px;
+border-radius: 8px;
+box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Asegurar que el mapa se vea bien en móviles */
+@media (max-width: 768px) {
+  #map {
+  height: 400px;
+  }
+}

@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { MapaEventosComponent } from './components/mapa-eventos/mapa-eventos';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [MapaEventosComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
