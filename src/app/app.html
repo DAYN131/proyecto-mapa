@@ -1,3 +1,11 @@
+<!-- src/app/app.html -->
 <div class="app-container">
-  <app-mapa-eventos></app-mapa-eventos>
+  <!-- Puedes mantener una barra de navegación simple si quieres -->
+  <nav class="nav-bar" *ngIf="false">
+    <a routerLink="/mapa" routerLinkActive="active">Mapa</a>
+    <a routerLink="/asistentes" routerLinkActive="active">Asistentes</a>
+  </nav>
+
+  <!-- Aquí se renderizarán los componentes según la ruta -->
+  <router-outlet></router-outlet>
 </div>

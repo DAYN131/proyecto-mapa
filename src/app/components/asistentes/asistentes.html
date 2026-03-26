@@ -1,0 +1,29 @@
+<!-- src/app/components/asistentes/asistentes.html -->
+<div class="asistentes-container">
+  <div class="asistentes-header">
+    <h2>
+      <span class="icon">👥</span>
+      Lista de Asistentes
+    </h2>
+    <button class="btn-agregar" (click)="agregarAsistente()">
+      <span>➕</span> Agregar Asistente
+    </button>
+  </div>
+
+  <div class="asistentes-grid">
+    <div class="asistente-card" *ngFor="let asistente of asistentes">
+      <div class="asistente-avatar">{{ asistente.avatar }}</div>
+      <div class="asistente-info">
+        <h3>{{ asistente.nombre }}</h3>
+        <p>{{ asistente.email }}</p>
+        <div class="eventos-count">
+          📅 {{ asistente.eventosAsistidos }} eventos asistidos
+        </div>
+      </div>
+      <div class="asistente-actions">
+        <button class="btn-ver" (click)="verDetalle(asistente)">Ver</button>
+        <button class="btn-eliminar" (click)="eliminarAsistente(asistente.id)">🗑️</button>
+      </div>
+    </div>
+  </div>
+</div>

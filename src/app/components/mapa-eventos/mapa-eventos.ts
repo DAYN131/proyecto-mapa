@@ -1,6 +1,7 @@
+// src/app/components/mapa-eventos/mapa-eventos.ts
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router'; // 👈 IMPORTAR Router
 
 // Declarar variable L sin importar al inicio
 declare let L: any;
@@ -13,6 +14,7 @@ declare let L: any;
   styleUrls: ['./mapa-eventos.css']
 })
 export class MapaEventosComponent implements OnInit {
+
   // Propiedades del menú
   menuVisible: boolean = false;
 
@@ -78,20 +80,40 @@ export class MapaEventosComponent implements OnInit {
     }
   ];
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+  // 👈 AGREGAR Router en el constructor
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+              private router: Router  // 👈 INYECTAR Router
+  ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
   async ngOnInit() {
     if (this.isBrowser) {
-      // Esperar a que Leaflet esté disponible (ya está cargado en index.html o por CDN)
       await this.cargarLeafletSiEsNecesario();
       this.inicializarMapa();
     }
   }
 
+  // 👈 MÉTODO PARA NAVEGAR A ASISTENTES (SOLO UNO, ELIMINAR EL DUPLICADO)
+  abrirModalAsistentes() {
+    this.menuVisible = false;
+    this.router.navigate(['/asistentes']);
+  }
+
+  // 👈 MÉTODO PARA NAVEGAR A EVENTOS
+  abrirModalEventos() {
+    this.menuVisible = false;
+    this.router.navigate(['/eventos']);
+  }
+
+  // 👈 MÉTODO PARA ESTADÍSTICAS
+  abrirModalEstadisticas() {
+    this.menuVisible = false;
+    alert('Estadísticas - Próximamente');
+  }
+
   private async cargarLeafletSiEsNecesario() {
-    // Si Leaflet no está disponible, cargarlo dinámicamente
     if (typeof L === 'undefined') {
       return new Promise((resolve) => {
         const script = document.createElement('script');
@@ -108,22 +130,6 @@ export class MapaEventosComponent implements OnInit {
   // Método para alternar el menú
   toggleMenu() {
     this.menuVisible = !this.menuVisible;
-  }
-
-  // Métodos para abrir modales
-  abrirModalEventos() {
-    this.modalVisible = true;
-    this.eventoSeleccionado = null;
-  }
-
-  abrirModalAsistentes() {
-    this.modalVisible = true;
-    this.eventoSeleccionado = null;
-  }
-
-  abrirModalEstadisticas() {
-    this.modalVisible = true;
-    this.eventoSeleccionado = null;
   }
 
   // Método para cerrar modal
@@ -180,9 +186,15 @@ export class MapaEventosComponent implements OnInit {
   }
 
   getEventoIcon(tipo: string): string {
-    // Lógica para devolver el nombre del icono, por ejemplo:
-    if (tipo === 'fiesta') return 'party-icon';
-    return 'default-icon';
+    const iconos: { [key: string]: string } = {
+      'concierto': 'fa-music',
+      'teatro': 'fa-masks-theater',
+      'festival': 'fa-star',
+      'taller': 'fa-palette',
+      'exposicion': 'fa-camera',
+      'fiesta': 'fa-champagne-glasses'
+    };
+    return iconos[tipo] || 'fa-calendar-days';
   }
 
   // Método para inicializar el mapa

@@ -10,9 +10,9 @@
         <i class="icon-menu"></i> Menú
       </button>
       <ul class="dropdown-menu" [class.show]="menuVisible">
-        <li><a (click)="abrirModalEventos()">📅 Lista de Eventos</a></li>
-        <li><a (click)="abrirModalAsistentes()">👥 Asistentes</a></li>
-        <li><a (click)="abrirModalEstadisticas()">📊 Estadísticas</a></li>
+        <li><a (click)="abrirModalEventos()"> Lista de Eventos</a></li>
+        <li><a (click)="abrirModalAsistentes()"> Asistentes</a></li>
+        <li><a (click)="abrirModalEstadisticas()">Estadísticas</a></li>
       </ul>
     </div>
   </div>
@@ -55,19 +55,19 @@
         <span class="close" (click)="cerrarModal()">&times;</span>
       </div>
       <div *ngIf="eventoSeleccionado" class="evento-detalle">
-        <div class="evento-icon">🎉</div>
+        <div class="evento-icon"></div>
         <h2>{{ eventoSeleccionado.nombre }}</h2>
         <div class="evento-info">
           <div class="info-item">
-            <span class="info-label">📌 Tipo:</span>
+            <span class="info-label"> Tipo:</span>
             <span class="info-value">{{ eventoSeleccionado.tipo }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">📅 Fecha:</span>
+            <span class="info-label">Fecha:</span>
             <span class="info-value">{{ eventoSeleccionado.fecha }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">📝 Descripción:</span>
+            <span class="info-label"> Descripción:</span>
             <span class="info-value">{{ eventoSeleccionado.descripcion }}</span>
           </div>
         </div>
@@ -77,7 +77,7 @@
         <ul class="eventos-lista">
           <li *ngFor="let evento of eventos" (click)="eventoSeleccionado = evento">
             <div class="evento-card">
-              <div class="evento-card-icon">{{ getEventoIcon(evento.tipo) }}</div>
+              <i class="fa-solid {{ getEventoIcon(evento.tipo) }}"></i>
               <div class="evento-card-content">
                 <strong>{{ evento.nombre }}</strong>
                 <div class="evento-card-meta">
@@ -93,3 +93,4 @@
     </div>
   </div>
 </div>
+

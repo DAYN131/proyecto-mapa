@@ -1,13 +1,15 @@
-import { Component, signal } from '@angular/core';
-import { MapaEventosComponent } from './components/mapa-eventos/mapa-eventos';
+// src/app/app.ts
+import { Component } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MapaEventosComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive,CommonModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
 export class App {
-  protected readonly title = signal('proyecto-mapa');
+  // No necesitas mostrarComponente ahora
 }

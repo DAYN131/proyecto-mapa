@@ -1,7 +1,11 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { MapaEventosComponent } from './components/mapa-eventos/mapa-eventos';
+import { AsistentesComponent } from './components/asistentes/asistentes';
 
 export const routes: Routes = [
-  { path: '', component: MapaEventosComponent },
-{ path: '**', redirectTo: '' }
+  { path: '', redirectTo: '/mapa', pathMatch: 'full' },
+{ path: 'mapa', component: MapaEventosComponent },
+{ path: 'asistentes', component: AsistentesComponent },
+{ path: '**', redirectTo: '/mapa' }
 ];

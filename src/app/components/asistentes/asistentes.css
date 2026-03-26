@@ -1,0 +1,165 @@
+/* src/app/components/asistentes/asistentes.css */
+.asistentes-container {
+  padding: 20px;
+  background: white;
+  border-radius: 24px;
+  margin: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.asistentes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.asistentes-header h2 {
+  color: var(--primary-dark);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 28px;
+}
+
+.btn-agregar {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-agregar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+}
+
+.asistentes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.asistente-card {
+  background: #F8F9FA;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.asistente-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(138, 43, 226, 0.15);
+  border-color: var(--primary-light);
+}
+
+.asistente-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: white;
+}
+
+.asistente-info {
+  flex: 1;
+}
+
+.asistente-info h3 {
+  color: var(--primary-dark);
+  margin: 0 0 4px 0;
+  font-size: 18px;
+}
+
+.asistente-info p {
+  color: #666;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.eventos-count {
+  font-size: 12px;
+  color: var(--secondary);
+  display: inline-block;
+  background: #E3F2FD;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.asistente-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-ver {
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.btn-ver:hover {
+  background: var(--primary);
+  transform: scale(1.05);
+}
+
+.btn-eliminar {
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-eliminar:hover {
+  background: #cc0000;
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .asistentes-container {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  .asistentes-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .asistente-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .asistente-actions {
+    justify-content: center;
+  }
+}
