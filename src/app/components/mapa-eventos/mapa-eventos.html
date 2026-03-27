@@ -1,22 +1,24 @@
 <div class="mapa-eventos-container">
 
   <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <i class="icon-location"></i>
-      <h1>Eventos Culturales</h1>
-    </div>
-    <div class="dropdown">
-      <button class="btn-primary dropdown-toggle" (click)="onMenuButtonClick($event)">
-        <i class="icon-menu"></i> Menú
-      </button>
-      <ul class="dropdown-menu" [class.show]="menuVisible">
-        <li><a (click)="abrirModalEventos()">Lista de Eventos</a></li>
-        <li><a (click)="abrirModalAsistentes()">Asistentes</a></li>
-        <li><a (click)="abrirModalEstadisticas()">Estadísticas</a></li>
-      </ul>
-    </div>
+<div class="header">
+  <div class="logo">
+    <span class="icon-location"></span>
+    <h1>Mapa Eventos</h1>
   </div>
+
+  <div class="dropdown">
+    <button class="btn-primary" (click)="menuVisible = !menuVisible">
+      Menú
+    </button>
+    <ul class="dropdown-menu" [class.show]="menuVisible">
+      <li><a (click)="abrirModalEventos()">Lista de Eventos</a></li>
+      <li><a (click)="abrirModalAsistentes()">Asistentes</a></li>
+      <li><a (click)="abrirModalEstadisticas()">Estadísticas</a></li>
+      <li><a (click)="abrirDashboard()">Dashboard</a></li>
+    </ul>
+  </div>
+</div>
 
   <!-- Filtros -->
   <div class="filtros">

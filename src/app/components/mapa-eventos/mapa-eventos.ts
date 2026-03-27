@@ -1,5 +1,5 @@
 // src/app/components/mapa-eventos/mapa-eventos.ts
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID,HostListener } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -12,6 +12,8 @@ declare let L: any;
   templateUrl: './mapa-eventos.html',
   styleUrls: ['./mapa-eventos.css']
 })
+
+
 export class MapaEventosComponent implements OnInit {
 
   menuVisible: boolean = false;
@@ -21,6 +23,14 @@ export class MapaEventosComponent implements OnInit {
   mapa: any;
   marcadores: any[] = [];
   private isBrowser: boolean;
+  
+  @HostListener('document:click', ['$event'])
+  cerrarMenu(event: Event) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown')) {
+      this.menuVisible = false;
+    }
+  }
 
   eventos: any[] = [
     // Conciertos
@@ -130,6 +140,10 @@ export class MapaEventosComponent implements OnInit {
     }
   ];
 
+
+
+
+
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
               private router: Router
@@ -161,6 +175,11 @@ export class MapaEventosComponent implements OnInit {
   abrirModalEventos() {
     this.menuVisible = false;
     this.router.navigate(['/eventos']);
+  }
+
+  abrirDashboard() {
+    this.menuVisible = false;
+    this.router.navigate(['/dashboard']);
   }
 
   abrirModalEstadisticas() {

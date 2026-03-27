@@ -1,0 +1,159 @@
+.db-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: sans-serif;
+  background: #f8f8f8;
+  min-height: 100vh;
+}
+
+.db-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.db-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+.db-header p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #888;
+}
+
+.btn-pdf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: #1D9E75;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-pdf:hover { background: #178a64; }
+.btn-pdf svg { width: 15px; height: 15px; }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.metric-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 16px;
+}
+.metric-label {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.metric-valor {
+  font-size: 26px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+.metric-tag {
+  font-size: 11px;
+  margin: 4px 0 0;
+}
+.tag-up      { color: #1D9E75; }
+.tag-down    { color: #E24B4A; }
+.tag-neutral { color: #888; }
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 16px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  margin: 0 0 12px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.chart-wrapper    { position: relative; height: 200px; }
+.chart-wrapper-sm { position: relative; height: 170px; }
+
+.tabla-wrapper { overflow-x: auto; }
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.tabla thead tr { background: #f8f8f8; }
+.tabla th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e5e5e5;
+}
+.tabla td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+.tabla tbody tr:last-child td { border-bottom: none; }
+.tabla tbody tr:hover { background: #fafafa; }
+
+.td-nombre { font-weight: 500; }
+.td-lugar  { font-size: 13px; color: #777; }
+.td-num    { font-weight: 500; }
+.text-right { text-align: right; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.badge-concierto { background: #E1F5EE; color: #0F6E56; }
+.badge-feria     { background: #E6F1FB; color: #185FA5; }
+.badge-cultural  { background: #EEEDFE; color: #534AB7; }
+.badge-deportivo { background: #FAEEDA; color: #854F0B; }

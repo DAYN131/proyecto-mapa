@@ -1,0 +1,77 @@
+<div class="db-container">
+
+  <div class="db-header">
+    <div>
+      <h1>Dashboard de eventos</h1>
+      <p>Resumen general</p>
+    </div>
+    <button class="btn-pdf" (click)="exportarPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <line x1="9" y1="15" x2="15" y2="15"/>
+      </svg>
+      Exportar PDF
+    </button>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card" *ngFor="let m of metricas">
+      <p class="metric-label">{{ m.label }}</p>
+      <p class="metric-valor">{{ m.valor }}</p>
+      <p class="metric-tag" [ngClass]="'tag-' + m.tipo">{{ m.tag }}</p>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <p class="card-title">Eventos por mes</p>
+      <div class="legend">
+        <span><span class="leg-dot" style="background:#1D9E75"></span>Realizados</span>
+        <span><span class="leg-dot" style="background:#B5D4F4"></span>Planeados</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="chartMes"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Por tipo</p>
+      <div class="chart-wrapper-sm">
+        <canvas id="chartTipo"></canvas>
+      </div>
+      <div class="legend" style="margin-top: 10px;">
+        <span><span class="leg-dot" style="background:#1D9E75"></span>Concierto</span>
+        <span><span class="leg-dot" style="background:#378ADD"></span>Feria</span>
+        <span><span class="leg-dot" style="background:#7F77DD"></span>Cultural</span>
+        <span><span class="leg-dot" style="background:#EF9F27"></span>Deportivo</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Últimos eventos registrados</p>
+    <div class="tabla-wrapper">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Lugar</th>
+            <th>Tipo</th>
+            <th class="text-right">Asistentes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of eventos">
+            <td class="td-nombre">{{ e.nombre }}</td>
+            <td class="td-lugar">{{ e.lugar }}</td>
+            <td><span class="badge" [ngClass]="'badge-' + e.tipo">{{ e.tipo }}</span></td>
+            <td class="text-right td-num">{{ e.asistentes | number }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
