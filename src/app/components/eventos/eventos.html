@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="eventos-header">
     <div class="header-left">
-      <h1>🎪 Gestión de Eventos</h1>
+      <h1>📅 Gestión de Eventos</h1>
       <span class="total-badge">{{ eventosFiltrados.length }} eventos</span>
     </div>
     <button class="btn-agregar" (click)="abrirFormulario()">
@@ -21,17 +21,17 @@
     />
     <div class="filtros-tipo">
       <button
-        *ngFor="let t of ['todos', ...tipos]"
+        *ngFor="let tipo of tiposFiltro"
         class="chip"
-        [class.active]="filtroTabla === t"
-        (click)="filtroTabla = t"
+        [class.active]="filtroTabla === (tipo === 'todos' ? 'todos' : tipo.nombre)"
+        (click)="filtroTabla = (tipo === 'todos' ? 'todos' : tipo.nombre)"
       >
-        {{ t === 'todos' ? 'Todos' : getEmojiTipo(t) + ' ' + t }}
+        {{ tipo === 'todos' ? 'Todos' : tipo.nombre }}
       </button>
     </div>
   </div>
 
-  <!-- Tabla -->
+  <!-- Tabla de eventos -->
   <div class="tabla-wrapper">
     <table class="tabla-eventos">
       <thead>
@@ -51,18 +51,22 @@
           <td class="td-nombre">{{ evento.nombre }}</td>
           <td>
             <span class="badge-tipo" [style.background]="getColorTipo(evento.tipo)">
-              {{ getEmojiTipo(evento.tipo) }} {{ evento.tipo }}
+              {{ evento.tipo }}
             </span>
           </td>
-          <td>{{ evento.fecha }}</td>
-          <td class="td-lugar">{{ evento.lugar }}</td>
-          <td class="td-desc">{{ evento.descripcion }}</td>
+          <td>{{ evento.fecha | date:'dd/MM/yyyy' }}</td>
+          <td class="td-lugar">{{ evento.lugar || 'No asignado' }}</td>
+          <td class="td-desc">{{ evento.descripcion || 'Sin descripción' }}</td>
           <td>
-            <button class="btn-eliminar" (click)="eliminarEvento(evento.id)">✕</button>
+            <button class="btn-eliminar" (click)="eliminarEvento(evento.id)" title="Eliminar evento">
+              🗑️
+            </button>
           </td>
         </tr>
         <tr *ngIf="eventosFiltrados.length === 0">
-          <td colspan="7" class="td-empty">No se encontraron eventos.</td>
+          <td colspan="7" class="td-empty">
+            📭 No se encontraron eventos. ¡Crea uno nuevo!
+          </td>
         </tr>
       </tbody>
     </table>
@@ -73,21 +77,28 @@
     <div class="modal-form" (click)="$event.stopPropagation()">
 
       <div class="modal-form-header">
-        <h2>Nuevo Evento</h2>
+        <h2>➕ Nuevo Evento</h2>
         <button class="btn-cerrar" (click)="cerrarFormulario()">✕</button>
       </div>
 
       <div class="form-grid">
 
         <div class="form-group full">
-          <label>Nombre *</label>
-          <input type="text" [(ngModel)]="nuevoEvento.nombre" placeholder="Nombre del evento" />
+          <label>Nombre del evento *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="nuevoEvento.nombre" 
+            placeholder="Ej: Conferencia de Tecnología 2024"
+          />
         </div>
 
         <div class="form-group">
-          <label>Tipo *</label>
-          <select [(ngModel)]="nuevoEvento.tipo">
-            <option *ngFor="let t of tipos" [value]="t">{{ getEmojiTipo(t) }} {{ t }}</option>
+          <label>Tipo de evento *</label>
+          <select [(ngModel)]="nuevoEvento.tipo_id">
+            <option [value]="null" disabled>Selecciona un tipo</option>
+            <option *ngFor="let tipo of tipos" [value]="tipo.id">
+              {{ tipo.nombre }}
+            </option>
           </select>
         </div>
 
@@ -98,33 +109,64 @@
 
         <div class="form-group full">
           <label>Lugar *</label>
-          <input type="text" [(ngModel)]="nuevoEvento.lugar" placeholder="Nombre del lugar" />
+          <input 
+            type="text" 
+            [(ngModel)]="nuevoEvento.lugar" 
+            placeholder="Ej: Auditorio Principal"
+          />
         </div>
 
         <div class="form-group">
           <label>Latitud</label>
-          <input type="number" [(ngModel)]="nuevoEvento.lat" placeholder="19.4326" step="0.0001" />
+          <input 
+            type="number" 
+            [(ngModel)]="nuevoEvento.lat" 
+            placeholder="19.4326" 
+            step="0.0001"
+          />
+          <small>Coordenada opcional para el mapa</small>
         </div>
 
         <div class="form-group">
           <label>Longitud</label>
-          <input type="number" [(ngModel)]="nuevoEvento.lng" placeholder="-99.1332" step="0.0001" />
+          <input 
+            type="number" 
+            [(ngModel)]="nuevoEvento.lng" 
+            placeholder="-99.1332" 
+            step="0.0001"
+          />
+          <small>Coordenada opcional para el mapa</small>
         </div>
 
         <div class="form-group full">
           <label>Descripción</label>
-          <textarea [(ngModel)]="nuevoEvento.descripcion" rows="3" placeholder="Descripción breve del evento"></textarea>
+          <textarea 
+            [(ngModel)]="nuevoEvento.descripcion" 
+            rows="3" 
+            placeholder="Describe brevemente el evento..."
+          ></textarea>
         </div>
 
       </div>
 
       <div class="form-actions">
-        <button class="btn-cancelar" (click)="cerrarFormulario()">Cancelar</button>
-        <button class="btn-guardar"
-          (click)="agregarEvento()"
-          [disabled]="!nuevoEvento.nombre || !nuevoEvento.fecha || !nuevoEvento.lugar">
-          Guardar Evento
+        <button class="btn-cancelar" type="button" (click)="cerrarFormulario()">
+          Cancelar
         </button>
+        <button 
+          class="btn-guardar" 
+          type="button"
+          (click)="agregarEvento()"
+          [disabled]="!nuevoEvento.nombre || !nuevoEvento.fecha || !nuevoEvento.lugar || !nuevoEvento.tipo_id"
+        >
+          {{ cargando ? 'Guardando...' : 'Guardar Evento' }}
+        </button>
+      </div>
+
+      <!-- Indicador de carga dentro del modal -->
+      <div class="modal-loading" *ngIf="cargando">
+        <div class="spinner"></div>
+        <p>Procesando...</p>
       </div>
 
     </div>
