@@ -1,3 +1,4 @@
+// services/lugar.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -5,9 +6,10 @@ import { Observable } from 'rxjs';
 export interface Lugar {
     id?: number;
     nombre: string;
-    colonia?: string;
-    latitud?: number;
-    longitud?: number;
+    direccion: string;     
+    lat: number;            
+    lng: number;            
+    gmapslink: string;      
 }
 
 @Injectable({
@@ -22,7 +24,19 @@ export class LugarService {
         return this.http.get<Lugar[]>(this.apiUrl);
     }
 
+    getLugar(id: number): Observable<Lugar> {
+        return this.http.get<Lugar>(`${this.apiUrl}/${id}`);
+    }
+
     crearLugar(lugar: Lugar): Observable<any> {
         return this.http.post(this.apiUrl, lugar);
+    }
+
+    actualizarLugar(id: number, lugar: Lugar): Observable<Lugar> {
+        return this.http.put<Lugar>(`${this.apiUrl}/${id}`, lugar);
+    }
+
+    eliminarLugar(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/${id}`);
     }
 }

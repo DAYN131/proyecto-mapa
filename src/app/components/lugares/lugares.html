@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Lugares - Gestión de Eventos</title>
+</head>
+<body>
+ <!-- components/lugares/lugares.html -->
+<div class="container">
+  <!-- Encabezado -->
+  <header class="header">
+    <h1> Registro de Lugares para Eventos</h1>
+    <p>Gestión de sedes, puntos de interés y coordenadas</p>
+    <div class="badge-info">
+       Los enlaces de Google Maps deben incluir coordenadas para extraer latitud y longitud.
+    </div>
+  </header>
+
+  <div class="card form-card">
+    <h2> Registrar nuevo lugar</h2>
+    <form class="place-form" (ngSubmit)="registrarLugar()" #lugarForm="ngForm">
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="nombre">Nombre del lugar</label>
+          <input type="text" id="nombre" name="nombre" 
+                 [(ngModel)]="nuevoLugar.nombre" 
+                 placeholder="Ej: Auditorio Nacional" required>
+        </div>
+        <div class="input-group">
+          <label for="direccion">Dirección</label>
+          <input type="text" id="direccion" name="direccion" 
+                 [(ngModel)]="nuevoLugar.direccion" 
+                 placeholder="Calle, ciudad" required>
+        </div>
+        <div class="input-group full-width">
+          <label for="gmapsLink">Enlace de Google Maps</label>
+          <input type="url" id="gmapsLink" name="gmapsLink" 
+                 [(ngModel)]="gmapsLinkInput" 
+                 placeholder="https://www.google.com/maps?q=lat,lng" required>
+          <small class="hint"> Debe contener ?q=lat,lng o @lat,lng para extraer coordenadas</small>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          {{ loading ? ' Registrando...' : ' Registrar lugar' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cargarEjemplos()" [disabled]="loading">
+           Cargar ejemplos
+        </button>
+      </div>
+      
+      <!-- Mensajes de feedback -->
+      <div *ngIf="successMessage" class="feedback-message success">
+        {{ successMessage }}
+      </div>
+      <div *ngIf="errorMessage" class="feedback-message error">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+
+  <!-- Listado de lugares -->
+  <div class="card list-card">
+    <div class="list-header">
+      <h2> Lugares registrados</h2>
+      <span class="record-badge">{{ lugares.length }} registro{{ lugares.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <div class="table-responsive">
+      <div *ngIf="loading && lugares.length === 0" class="loading-indicator">
+        Cargando lugares...
+      </div>
+      <table *ngIf="!loading || lugares.length > 0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Google Maps</th>
+            <th>Latitud</th>
+            <th>Longitud</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+      <tbody>
+            <tr *ngFor="let lugar of lugares">
+              <td class="cell-id">{{ lugar.id }}</td>
+              <td>{{ lugar.nombre }}</td>
+              <td>{{ lugar.direccion }}</td>
+              <td>
+                <a [href]="lugar.gmapslink || 'https://www.google.com/maps?q=' + lugar.lat + ',' + lugar.lng" 
+                  target="_blank" class="map-link"> Ver en mapa</a>
+              </td>
+              <td><span class="coord-cell">{{ lugar.lat | number:'1.6' }}</span></td>
+              <td><span class="coord-cell">{{ lugar.lng | number:'1.6' }}</span></td>
+              <td>
+                <button class="btn-delete" (click)="eliminarLugar(lugar.id!)" [disabled]="loading">
+                   Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+ 
+</body>
+</html>

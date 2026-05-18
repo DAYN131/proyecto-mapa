@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="eventos-header">
     <div class="header-left">
-      <h1>📅 Gestión de Eventos</h1>
+      <h1> Gestión de Eventos</h1>
       <span class="total-badge">{{ eventosFiltrados.length }} eventos</span>
     </div>
     <button class="btn-agregar" (click)="abrirFormulario()">
@@ -59,7 +59,6 @@
           <td class="td-desc">{{ evento.descripcion || 'Sin descripción' }}</td>
           <td>
             <button class="btn-eliminar" (click)="eliminarEvento(evento.id)" title="Eliminar evento">
-              🗑️
             </button>
           </td>
         </tr>
@@ -116,27 +115,7 @@
           />
         </div>
 
-        <div class="form-group">
-          <label>Latitud</label>
-          <input 
-            type="number" 
-            [(ngModel)]="nuevoEvento.lat" 
-            placeholder="19.4326" 
-            step="0.0001"
-          />
-          <small>Coordenada opcional para el mapa</small>
-        </div>
-
-        <div class="form-group">
-          <label>Longitud</label>
-          <input 
-            type="number" 
-            [(ngModel)]="nuevoEvento.lng" 
-            placeholder="-99.1332" 
-            step="0.0001"
-          />
-          <small>Coordenada opcional para el mapa</small>
-        </div>
+       
 
         <div class="form-group full">
           <label>Descripción</label>

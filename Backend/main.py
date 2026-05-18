@@ -81,20 +81,21 @@ def crear_evento(evento: dict):
 def get_lugares():
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("SELECT id, nombre, colonia, latitud, longitud FROM lugar")
+    cur.execute("SELECT id, nombre, direccion, latitud, longitud,gmapslink FROM lugar")
     rows = cur.fetchall()
     cur.close(); conn.close()
-    return [{"id": r[0], "nombre": r[1], "colonia": r[2],
+    return [{"id": r[0], "nombre": r[1], "direccion": r[2],
             "lat": float(r[3]) if r[3] else None,
-            "lng": float(r[4]) if r[4] else None} for r in rows]
+            "lng": float(r[4]) if r[4] else None,
+            "gmapslink": r[5]} for r in rows]
 
 @app.post("/api/lugares")
 def crear_lugar(lugar: dict):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO lugar (nombre, colonia, latitud, longitud) VALUES (%s, %s, %s, %s) RETURNING id",
-        (lugar["nombre"], lugar.get("colonia"), lugar.get("lat"), lugar.get("lng"))
+        "INSERT INTO lugar (nombre, direccion, latitud, longitud, gmapslink) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+        (lugar["nombre"], lugar.get("direccion"), lugar.get("lat"), lugar.get("lng"), lugar.get("gmapslink"))
     )
     nuevo_id = cur.fetchone()[0]
     conn.commit(); cur.close(); conn.close()

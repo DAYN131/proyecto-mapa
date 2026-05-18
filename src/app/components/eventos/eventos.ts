@@ -166,71 +166,76 @@ export class EventosComponent implements OnInit {
     this.mostrarFormulario = false;
     this.cargando = false;
   }
+// components/eventos/eventos.ts - CORREGIDO
+// Reemplaza el método agregarEvento() con este:
 
-  agregarEvento() {
+agregarEvento() {
     // Validaciones
     if (!this.nuevoEvento.nombre) {
-      alert('❌ El nombre del evento es obligatorio');
-      return;
+        alert('❌ El nombre del evento es obligatorio');
+        return;
     }
     if (!this.nuevoEvento.tipo_id) {
-      alert('❌ Debes seleccionar un tipo de evento');
-      return;
+        alert('❌ Debes seleccionar un tipo de evento');
+        return;
     }
     if (!this.nuevoEvento.fecha) {
-      alert('❌ La fecha es obligatoria');
-      return;
+        alert('❌ La fecha es obligatoria');
+        return;
     }
     if (!this.nuevoEvento.lugar) {
-      alert('❌ El lugar es obligatorio');
-      return;
+        alert('❌ El lugar es obligatorio');
+        return;
     }
 
     this.cargando = true;
     
-    // Primero crear el lugar si tiene coordenadas
+    // CORREGIDO: Usar la estructura correcta para Lugar
     const lugarData = {
-      nombre: this.nuevoEvento.lugar,
-      colonia: '',
-      latitud: this.nuevoEvento.lat || null,
-      longitud: this.nuevoEvento.lng || null
+        nombre: this.nuevoEvento.lugar,
+        direccion: this.nuevoEvento.direccion || '',  // Añadir dirección
+        lat: this.nuevoEvento.lat || 0,               // lat en lugar de latitud
+        lng: this.nuevoEvento.lng || 0,               // lng en lugar de longitud
+        gmapslink: `https://www.google.com/maps?q=${this.nuevoEvento.lat || 0},${this.nuevoEvento.lng || 0}` // URL por defecto
     };
 
+    console.log('Enviando lugarData:', lugarData); // Debug
+
     this.lugarService.crearLugar(lugarData).subscribe({
-      next: (lugarCreado) => {
-        console.log('Lugar creado:', lugarCreado);
-        
-        // Luego crear el evento
-        const eventoData = {
-          nombre: this.nuevoEvento.nombre,
-          fecha: this.nuevoEvento.fecha,
-          tipo_id: this.nuevoEvento.tipo_id,
-          lugar_id: lugarCreado.id,
-          descripcion: this.nuevoEvento.descripcion
-        };
-        
-        this.eventoService.crearEvento(eventoData).subscribe({
-          next: (response) => {
-            console.log('Evento creado:', response);
-            alert('✅ Evento creado exitosamente');
-            this.cerrarFormulario();
-            this.cargarEventos(); // Recargar la lista
+        next: (lugarCreado) => {
+            console.log('Lugar creado:', lugarCreado);
+            
+            // Luego crear el evento
+            const eventoData = {
+                nombre: this.nuevoEvento.nombre,
+                fecha: this.nuevoEvento.fecha,
+                tipo_id: this.nuevoEvento.tipo_id,
+                lugar_id: lugarCreado.id,
+                descripcion: this.nuevoEvento.descripcion
+            };
+            
+            this.eventoService.crearEvento(eventoData).subscribe({
+                next: (response) => {
+                    console.log('Evento creado:', response);
+                    alert('✅ Evento creado exitosamente');
+                    this.cerrarFormulario();
+                    this.cargarEventos();
+                    this.cargando = false;
+                },
+                error: (err) => {
+                    console.error('Error al crear evento:', err);
+                    alert('❌ Error al crear el evento: ' + (err.error?.detail || err.message));
+                    this.cargando = false;
+                }
+            });
+        },
+        error: (err) => {
+            console.error('Error al crear lugar:', err);
+            alert('❌ Error al crear el lugar: ' + (err.error?.detail || err.message));
             this.cargando = false;
-          },
-          error: (err) => {
-            console.error('Error al crear evento:', err);
-            alert('❌ Error al crear el evento: ' + (err.error?.detail || err.message));
-            this.cargando = false;
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Error al crear lugar:', err);
-        alert('❌ Error al crear el lugar');
-        this.cargando = false;
-      }
+        }
     });
-  }
+}
 
   eliminarEvento(id: number) {
     if (confirm('¿Estás seguro de eliminar este evento? Esta acción no se puede deshacer.')) {
