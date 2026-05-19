@@ -1,4 +1,4 @@
-/* evento-asistente.css */
+/* asistente.css */
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -83,9 +83,13 @@
 }
 
 /* Formulario */
+.place-form {
+    margin-top: 0.5rem;
+}
+
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -94,6 +98,10 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.input-group.full-width {
+    grid-column: 1 / -1;
 }
 
 .input-group label {
@@ -106,6 +114,27 @@
 
 .input-group label i {
     margin-right: 0.3rem;
+}
+
+.input-group input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #dce4e8;
+    border-radius: 0.8rem;
+    font-size: 0.95rem;
+    background: white;
+    font-family: inherit;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #58C9B9;
+    box-shadow: 0 0 0 3px rgba(88, 201, 185, 0.2);
+}
+
+.input-group input:disabled {
+    background-color: #f5f7fa;
+    color: #7f8c8d;
+    cursor: not-allowed;
 }
 
 .input-group select {
@@ -174,6 +203,15 @@
 .btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: #346888;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #2a5775;
 }
 
 /* Barra de búsqueda */
@@ -498,10 +536,65 @@ tr:hover td {
     color: #48b5a5;
 }
 
+/* Coord / map cells */
+.coord-cell {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    background: #f2f6f9;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    text-align: center;
+    display: inline-block;
+}
+
+.map-link {
+    background: #eef3fc;
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #346888;
+    transition: background 0.2s;
+    white-space: nowrap;
+    min-width: 100px;
+    display: inline-block;
+}
+
+.map-link:hover {
+    background: #346888;
+    color: white;
+}
+
 /* Acciones */
 .acciones {
     white-space: nowrap;
     width: 100px;
+}
+
+.btn-edit {
+    background: transparent;
+    border: 1px solid #b8d9f5;
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4A90E2;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin-right: 8px;
+}
+
+.btn-edit:hover:not(:disabled) {
+    background: #4A90E2;
+    border-color: #4A90E2;
+    color: white;
+}
+
+.btn-edit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-delete {
@@ -600,12 +693,18 @@ tr:hover td {
         width: auto;
     }
     
-    .btn-delete {
+    .btn-delete, .btn-edit {
         width: 100%;
+        margin-right: 0;
     }
     
     .email-cell {
         max-width: 120px;
+    }
+
+    .coord-cell {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
     }
 }
 

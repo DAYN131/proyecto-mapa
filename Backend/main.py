@@ -879,35 +879,31 @@ def registrar_asistente(ea: dict):
         if not asistente:
             raise HTTPException(status_code=404, detail=f" Asistente con ID {ea['asistente_id']} no existe")
         
-        # Verificar que el evento_lugar existe (usando evento_id)
-        cur.execute("""
-            SELECT el.id, e.nombre 
-            FROM evento_lugar el
-            JOIN evento e ON el.evento_id = e.id
-            WHERE el.id = %s
-        """, (ea["evento_id"],))
-        evento_lugar = cur.fetchone()
-        if not evento_lugar:
-            raise HTTPException(status_code=404, detail=f" Evento-Lugar con ID {ea['evento_id']} no existe")
+        # Verificar que el evento existe
+        cur.execute("SELECT id, nombre FROM evento WHERE id = %s", (ea["evento_id"],))
+        evento = cur.fetchone()
+        if not evento:
+            raise HTTPException(status_code=404, detail=f" Evento con ID {ea['evento_id']} no existe")
         
-        # Verificar que no esté duplicado
+        # Verificar que no esté duplicado (usando evento_id directamente)
         cur.execute("""
             SELECT id FROM evento_asistente 
             WHERE asistente_id = %s AND evento_id = %s
         """, (ea["asistente_id"], ea["evento_id"]))
+        
         if cur.fetchone():
             raise HTTPException(
                 status_code=400, 
-                detail=f" El asistente '{asistente[1]}' ya está registrado en este evento"
+                detail=f" El asistente '{asistente[1]}' ya está registrado en '{evento[1]}'"
             )
         
-        # Insertar registro (usando evento_id, NO evento_lugar_id)
-        cur.execute(
-            """INSERT INTO evento_asistente (asistente_id, evento_id) 
-               VALUES (%s, %s) 
-               RETURNING id""",
-            (ea["asistente_id"], ea["evento_id"])
-        )
+        # Insertar registro (usando evento_id directamente)
+        cur.execute("""
+            INSERT INTO evento_asistente (asistente_id, evento_id) 
+            VALUES (%s, %s) 
+            RETURNING id
+        """, (ea["asistente_id"], ea["evento_id"]))
+        
         nuevo_id = cur.fetchone()[0]
         conn.commit()
         
@@ -915,7 +911,7 @@ def registrar_asistente(ea: dict):
         print(f" POST /api/evento-asistente tomó: {elapsed:.2f} ms")
         
         return {
-            "mensaje": f" Asistente '{asistente[1]}' registrado al evento exitosamente",
+            "mensaje": f" {asistente[1]} registrado en {evento[1]}",
             "id": nuevo_id
         }
     except HTTPException:
@@ -927,8 +923,7 @@ def registrar_asistente(ea: dict):
     finally:
         cur.close()
         return_conn(conn)
-
-
+        
 @app.delete("/api/evento-asistente/{evento_asistente_id}")
 def eliminar_asistente_evento(evento_asistente_id: int):
     start_time = time.time()
@@ -941,14 +936,13 @@ def eliminar_asistente_evento(evento_asistente_id: int):
             SELECT ea.id, a.nombre, e.nombre 
             FROM evento_asistente ea
             JOIN asistente a ON ea.asistente_id = a.id
-            JOIN evento_lugar el ON ea.evento_id = el.id
-            JOIN evento e ON el.evento_id = e.id
+            JOIN evento e ON ea.evento_id = e.id
             WHERE ea.id = %s
         """, (evento_asistente_id,))
         
         registro = cur.fetchone()
         if not registro:
-            raise HTTPException(status_code=404, detail=" Registro no encontrado")
+            raise HTTPException(status_code=404, detail="❌ Registro no encontrado")
         
         # Eliminar
         cur.execute("DELETE FROM evento_asistente WHERE id = %s RETURNING id", (evento_asistente_id,))
