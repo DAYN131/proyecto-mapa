@@ -16,7 +16,6 @@ export interface Lugar {
     providedIn: 'root'
 })
 export class LugarService {
-    // USA LA URL COMPLETA DEL BACKEND
     private apiUrl = 'http://localhost:8000/api/lugares';
 
     constructor(private http: HttpClient) { }

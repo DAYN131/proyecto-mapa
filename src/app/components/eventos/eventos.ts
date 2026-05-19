@@ -1,262 +1,213 @@
-import { Component, OnInit } from '@angular/core';
+// src/app/components/eventos/eventos.component.ts
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EventoService } from '../../services/evento';
-import { TipoEventoService, TipoEvento } from '../../services/tipo-evento';
-import { LugarService } from '../../services/lugar';
+import { EventoService, Evento, TipoEvento, Lugar } from '../../services/evento';
 
 @Component({
-  selector: 'app-eventos',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './eventos.html',
-  styleUrls: ['./eventos.css']
+    selector: 'app-eventos',
+    standalone: true,
+    imports: [CommonModule, FormsModule],
+    templateUrl: './eventos.html',
+    styleUrls: ['./eventos.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EventosComponent implements OnInit {
-  // Datos principales
-  eventos: any[] = [];
-  tipos: TipoEvento[] = [];
-  lugares: any[] = [];
-  
-  // Filtros y búsqueda
-  busqueda: string = '';
-  filtroTabla: string = 'todos';
-  
-  // UI states
-  mostrarFormulario: boolean = false;
-  cargando: boolean = false;
-  
-  // Nuevo evento
-  nuevoEvento: any = {
-    nombre: '',
-    tipo_id: null,
-    fecha: '',
-    lugar: '',
-    lat: null,
-    lng: null,
-    descripcion: ''
-  };
-
-  // Propiedad computada para los tipos del filtro
-  get tiposFiltro(): any[] {
-    return ['todos', ...this.tipos];
-  }
-
-  constructor(
-    private eventoService: EventoService,
-    private tipoService: TipoEventoService,
-    private lugarService: LugarService
-  ) {}
-
-  ngOnInit() {
-    this.cargarTodosLosDatos();
-  }
-
-  cargarTodosLosDatos() {
-    this.cargando = true;
+    eventos: Evento[] = [];
+    tipos: TipoEvento[] = [];
+    lugares: Lugar[] = [];
     
-    Promise.all([
-      this.cargarEventos(),
-      this.cargarTipos(),
-      this.cargarLugares()
-    ]).finally(() => {
-      this.cargando = false;
-    });
-  }
-
-  cargarEventos(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.eventoService.getEventos().subscribe({
-        next: (data) => {
-          console.log('Eventos cargados:', data);
-          this.eventos = data.map((ev: any) => ({
-            id: ev.id,
-            nombre: ev.nombre,
-            tipo: ev.tipo,
-            fecha: ev.fecha,
-            lugar: this.obtenerLugarPorEvento(ev.id),
-            descripcion: ev.descripcion || 'Sin descripción',
-            lat: ev.lat,
-            lng: ev.lng
-          }));
-          resolve();
-        },
-        error: (err) => {
-          console.error('Error cargando eventos:', err);
-          reject(err);
-        }
-      });
-    });
-  }
-
-  cargarTipos(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.tipoService.getTipos().subscribe({
-        next: (data) => {
-          console.log('Tipos cargados:', data);
-          this.tipos = data;
-          resolve();
-        },
-        error: (err) => {
-          console.error('Error cargando tipos:', err);
-          reject(err);
-        }
-      });
-    });
-  }
-
-  cargarLugares(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.lugarService.getLugares().subscribe({
-        next: (data) => {
-          console.log('Lugares cargados:', data);
-          this.lugares = data;
-          resolve();
-        },
-        error: (err) => {
-          console.error('Error cargando lugares:', err);
-          reject(err);
-        }
-      });
-    });
-  }
-
-  obtenerLugarPorEvento(eventoId: number): string {
-    // Aquí puedes implementar lógica para obtener el lugar del evento
-    // Por ahora retorna un texto dummy
-    const lugar = this.lugares.find(l => l.evento_id === eventoId);
-    return lugar ? lugar.nombre : 'Por asignar';
-  }
-
-  // Eventos filtrados
-  get eventosFiltrados() {
-    let filtrados = this.eventos;
-    
-    // Filtrar por tipo
-    if (this.filtroTabla !== 'todos') {
-      filtrados = filtrados.filter(e => e.tipo === this.filtroTabla);
-    }
-    
-    // Filtrar por búsqueda
-    if (this.busqueda) {
-      const busq = this.busqueda.toLowerCase();
-      filtrados = filtrados.filter(e => 
-        e.nombre.toLowerCase().includes(busq) || 
-        (e.lugar && e.lugar.toLowerCase().includes(busq))
-      );
-    }
-    
-    return filtrados;
-  }
-
-  abrirFormulario() {
-    this.nuevoEvento = {
-      nombre: '',
-      tipo_id: null,
-      fecha: '',
-      lugar: '',
-      lat: null,
-      lng: null,
-      descripcion: ''
+    nuevoEvento: Evento = {
+        nombre: '',
+        fecha: '',
+        hora_inicio: '',
+        tipo_id: undefined,
+        lugar_id: 0
     };
-    this.mostrarFormulario = true;
-  }
-
-  cerrarFormulario() {
-    this.mostrarFormulario = false;
-    this.cargando = false;
-  }
-// components/eventos/eventos.ts - CORREGIDO
-// Reemplaza el método agregarEvento() con este:
-
-agregarEvento() {
-    // Validaciones
-    if (!this.nuevoEvento.nombre) {
-        alert('❌ El nombre del evento es obligatorio');
-        return;
-    }
-    if (!this.nuevoEvento.tipo_id) {
-        alert('❌ Debes seleccionar un tipo de evento');
-        return;
-    }
-    if (!this.nuevoEvento.fecha) {
-        alert('❌ La fecha es obligatoria');
-        return;
-    }
-    if (!this.nuevoEvento.lugar) {
-        alert('❌ El lugar es obligatorio');
-        return;
-    }
-
-    this.cargando = true;
     
-    // CORREGIDO: Usar la estructura correcta para Lugar
-    const lugarData = {
-        nombre: this.nuevoEvento.lugar,
-        direccion: this.nuevoEvento.direccion || '',  // Añadir dirección
-        lat: this.nuevoEvento.lat || 0,               // lat en lugar de latitud
-        lng: this.nuevoEvento.lng || 0,               // lng en lugar de longitud
-        gmapslink: `https://www.google.com/maps?q=${this.nuevoEvento.lat || 0},${this.nuevoEvento.lng || 0}` // URL por defecto
-    };
-
-    console.log('Enviando lugarData:', lugarData); // Debug
-
-    this.lugarService.crearLugar(lugarData).subscribe({
-        next: (lugarCreado) => {
-            console.log('Lugar creado:', lugarCreado);
+    loading = false;
+    errorMessage = '';
+    successMessage = '';
+    editandoId: number | null = null;
+    
+    constructor(
+        private eventoService: EventoService,
+        private cdr: ChangeDetectorRef
+    ) { }
+    
+    ngOnInit(): void {
+        this.cargarDatos();
+    }
+    
+    cargarDatos(): void {
+        this.loading = true;
+        this.cdr.markForCheck();
+        
+        this.eventoService.getEventos().subscribe({
+            next: (data) => {
+                this.eventos = data;
+                this.cdr.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error:', error);
+                this.mostrarError('Error al cargar eventos');
+            }
+        });
+        
+        this.eventoService.getTiposEvento().subscribe({
+            next: (data) => {
+                this.tipos = data;
+                this.cdr.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error:', error);
+                this.mostrarError('Error al cargar tipos');
+            }
+        });
+        
+        this.eventoService.getLugares().subscribe({
+            next: (data) => {
+                this.lugares = data;
+                this.loading = false;
+                this.cdr.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error:', error);
+                this.mostrarError('Error al cargar lugares');
+                this.loading = false;
+                this.cdr.markForCheck();
+            }
+        });
+    }
+    
+    registrarEvento(): void {
+        if (!this.nuevoEvento.nombre || !this.nuevoEvento.fecha || !this.nuevoEvento.lugar_id) {
+            this.mostrarError(' Los campos nombre, fecha y lugar son obligatorios');
+            return;
+        }
+        
+        this.loading = true;
+        this.cdr.markForCheck();
+        
+        this.eventoService.crearEvento(this.nuevoEvento).subscribe({
+            next: (respuesta) => {
+                this.mostrarExito(` Evento "${this.nuevoEvento.nombre}" creado`);
+                this.resetFormulario();
+                this.cargarDatos();
+                this.loading = false;
+                this.cdr.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error:', error);
+                this.mostrarError(error.error?.detail || ' Error al crear el evento');
+                this.loading = false;
+                this.cdr.markForCheck();
+            }
+        });
+    }
+    
+    editarEvento(evento: Evento): void {
+        this.editandoId = evento.id!;
+        this.nuevoEvento = {
+            nombre: evento.nombre,
+            fecha: evento.fecha,
+            hora_inicio: evento.hora_inicio || '',
+            tipo_id: evento.tipo_id,
+            lugar_id: evento.lugar_id
+        };
+        this.cdr.detectChanges();
+        
+        document.querySelector('.form-card')?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
+    
+    actualizarEvento(): void {
+        if (!this.nuevoEvento.nombre || !this.nuevoEvento.fecha || !this.nuevoEvento.lugar_id) {
+            this.mostrarError('Los campos nombre, fecha y lugar son obligatorios');
+            return;
+        }
+        
+        this.loading = true;
+        this.cdr.markForCheck();
+        
+        this.eventoService.actualizarEvento(this.editandoId!, this.nuevoEvento).subscribe({
+            next: () => {
+                this.mostrarExito(` Evento "${this.nuevoEvento.nombre}" actualizado`);
+                this.resetFormulario();
+                this.cancelarEdicion();
+                this.cargarDatos();
+                this.loading = false;
+                this.cdr.markForCheck();
+            },
+            error: (error) => {
+                console.error('Error:', error);
+                this.mostrarError(error.error?.detail || ' Error al actualizar');
+                this.loading = false;
+                this.cdr.markForCheck();
+            }
+        });
+    }
+    
+    eliminarEvento(id: number, nombre: string): void {
+        if (confirm(`¿Eliminar evento "${nombre}"?`)) {
+            this.loading = true;
+            this.cdr.markForCheck();
             
-            // Luego crear el evento
-            const eventoData = {
-                nombre: this.nuevoEvento.nombre,
-                fecha: this.nuevoEvento.fecha,
-                tipo_id: this.nuevoEvento.tipo_id,
-                lugar_id: lugarCreado.id,
-                descripcion: this.nuevoEvento.descripcion
-            };
-            
-            this.eventoService.crearEvento(eventoData).subscribe({
-                next: (response) => {
-                    console.log('Evento creado:', response);
-                    alert('✅ Evento creado exitosamente');
-                    this.cerrarFormulario();
-                    this.cargarEventos();
-                    this.cargando = false;
+            this.eventoService.eliminarEvento(id).subscribe({
+                next: (respuesta) => {
+                    this.mostrarExito(respuesta.mensaje || ` Evento "${nombre}" eliminado`);
+                    this.cargarDatos();
+                    this.loading = false;
+                    this.cdr.markForCheck();
                 },
-                error: (err) => {
-                    console.error('Error al crear evento:', err);
-                    alert('❌ Error al crear el evento: ' + (err.error?.detail || err.message));
-                    this.cargando = false;
+                error: (error) => {
+                    console.error('Error:', error);
+                    this.mostrarError(error.error?.detail || ' Error al eliminar');
+                    this.loading = false;
+                    this.cdr.markForCheck();
                 }
             });
-        },
-        error: (err) => {
-            console.error('Error al crear lugar:', err);
-            alert('❌ Error al crear el lugar: ' + (err.error?.detail || err.message));
-            this.cargando = false;
         }
-    });
-}
-
-  eliminarEvento(id: number) {
-    if (confirm('¿Estás seguro de eliminar este evento? Esta acción no se puede deshacer.')) {
-      console.log('Eliminar evento:', id);
-      alert('🚧 Funcionalidad de eliminar en desarrollo');
-      // Aquí llamarías a un endpoint DELETE cuando lo tengas
     }
-  }
-
-  // Helpers visuales
-  getColorTipo(tipo: string): string {
-    const colores: {[key: string]: string} = {
-      'Fiesta': '#FF6B6B',
-      'Conferencia': '#4ECDC4',
-      'Taller': '#45B7D1',
-      'Reunión': '#96CEB4',
-      'Concierto': '#FFEAA7',
-      'Deportes': '#FF9F43',
-      'Cultural': '#A29BFE',
-      'default': '#DFE6E9'
-    };
-    return colores[tipo] || colores['default'];
-  }
+    
+    cancelarEdicion(): void {
+        this.editandoId = null;
+        this.resetFormulario();
+        this.cdr.detectChanges();
+    }
+    
+    resetFormulario(): void {
+        this.nuevoEvento = {
+            nombre: '',
+            fecha: '',
+            hora_inicio: '',
+            tipo_id: undefined,
+            lugar_id: 0
+        };
+        this.cdr.detectChanges();
+    }
+    
+    mostrarError(mensaje: string): void {
+        this.errorMessage = mensaje;
+        this.cdr.markForCheck();
+        setTimeout(() => {
+            this.errorMessage = '';
+            this.cdr.markForCheck();
+        }, 5000);
+    }
+    
+    mostrarExito(mensaje: string): void {
+        this.successMessage = mensaje;
+        this.cdr.markForCheck();
+        setTimeout(() => {
+            this.successMessage = '';
+            this.cdr.markForCheck();
+        }, 3000);
+    }
+    
+    trackById(index: number, evento: Evento): number {
+        return evento.id || index;
+    }
 }

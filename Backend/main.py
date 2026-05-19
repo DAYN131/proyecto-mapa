@@ -151,7 +151,7 @@ def actualizar_lugar(lugar_id: int, lugar: dict):
     finally:
         cur.close()
         return_conn(conn)
-
+        
 @app.delete("/api/lugares/{lugar_id}")
 def eliminar_lugar(lugar_id: int):
     start_time = time.time()
@@ -159,23 +159,45 @@ def eliminar_lugar(lugar_id: int):
     cur = conn.cursor()
     
     try:
-        cur.execute("DELETE FROM lugar WHERE id = %s RETURNING id", (lugar_id,))
+        # Verificar si el lugar está siendo usado
+        cur.execute("""
+            SELECT COUNT(*) as total, 
+                   STRING_AGG(DISTINCT e.nombre, ', ') as eventos
+            FROM evento_lugar el
+            JOIN evento e ON el.evento_id = e.id
+            WHERE el.lugar_id = %s
+        """, (lugar_id,))
+        
+        result = cur.fetchone()
+        total_usos = result[0]
+        eventos_nombres = result[1] if result[1] else ""
+        
+        if total_usos > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f" No se puede eliminar el lugar porque está asociado a {total_usos} evento(s): {eventos_nombres}. Primero elimina o reasigna esos eventos."
+            )
+        
+        cur.execute("DELETE FROM lugar WHERE id = %s RETURNING id, nombre", (lugar_id,))
         eliminado = cur.fetchone()
         conn.commit()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"DELETE /api/lugares/{lugar_id} tomó: {elapsed:.2f} ms")
-        
         if eliminado:
-            return {"mensaje": "Lugar eliminado", "id": lugar_id}
+            return {
+                "mensaje": f" Lugar '{eliminado[1]}' eliminado exitosamente",
+                "id": eliminado[0]
+            }
         else:
             raise HTTPException(status_code=404, detail="Lugar no encontrado")
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cur.close()
         return_conn(conn)
+
 
 
 # ==================================================
@@ -269,19 +291,52 @@ def eliminar_tipo(tipo_id: int):
     cur = conn.cursor()
     
     try:
+        # 1. Verificar si el tipo existe
+        cur.execute("SELECT id, nombre FROM tipo_evento WHERE id = %s", (tipo_id,))
+        tipo = cur.fetchone()
+        if not tipo:
+            raise HTTPException(status_code=404, detail="❌ Tipo de evento no encontrado")
+        
+        # 2. Verificar si hay eventos usando este tipo
+        cur.execute("""
+            SELECT COUNT(*) as total, 
+                   STRING_AGG(nombre, ', ' LIMIT 5) as eventos
+            FROM evento 
+            WHERE tipo_id = %s
+        """, (tipo_id,))
+        
+        result = cur.fetchone()
+        eventos_count = result[0]
+        eventos_nombres = result[1] if result[1] else ""
+        
+        # 3. Si tiene eventos, bloquear eliminación
+        if eventos_count > 0:
+            mensaje_eventos = eventos_nombres
+            if eventos_count > 5:
+                mensaje_eventos += f"... y {eventos_count - 5} más"
+            
+            raise HTTPException(
+                status_code=400, 
+                detail=f" No se puede eliminar el tipo de evento '{tipo[1]}' porque está siendo usado por {eventos_count} evento(s): {mensaje_eventos}. Primero cambia el tipo de esos eventos o elimínalos."
+            )
+        
+        # 4. Si no tiene eventos, proceder con eliminación
         cur.execute("DELETE FROM tipo_evento WHERE id = %s RETURNING id", (tipo_id,))
         eliminado = cur.fetchone()
         conn.commit()
         
         elapsed = (time.time() - start_time) * 1000
-        print(f"DELETE /api/tipo-evento/{tipo_id} tomó: {elapsed:.2f} ms")
+        print(f" DELETE /api/tipo-evento/{tipo_id} tomó: {elapsed:.2f} ms")
         
-        if eliminado:
-            return {"mensaje": "Tipo eliminado", "id": tipo_id}
-        else:
-            raise HTTPException(status_code=404, detail="Tipo no encontrado")
+        return {
+            "mensaje": f" Tipo de evento '{tipo[1]}' eliminado exitosamente",
+            "id": tipo_id
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
+        print(f" Error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cur.close()
@@ -299,14 +354,13 @@ def get_asistentes():
     cur = conn.cursor()
     
     try:
-        cur.execute("SELECT id, nombre, sexo, email, telefono, seccion FROM asistente ORDER BY id")
+        cur.execute("SELECT id, nombre, sexo, fecha_nacimiento, email, telefono, seccion FROM asistente ORDER BY id")
         rows = cur.fetchall()
         
         elapsed = (time.time() - start_time) * 1000
         print(f"GET /api/asistentes tomó: {elapsed:.2f} ms")
         
-        return [{"id": r[0], "nombre": r[1], "sexo": r[2], 
-                "email": r[3], "telefono": r[4], "seccion": r[5]} for r in rows]
+        return [{"id": r[0], "nombre": r[1], "sexo": r[2], "fecha_nacimiento": r[3], "email": r[4], "telefono": r[5], "seccion": r[6]} for r in rows]
     finally:
         cur.close()
         return_conn(conn)
@@ -372,6 +426,7 @@ def actualizar_asistente(asistente_id: int, a: dict):
         cur.close()
         return_conn(conn)
 
+
 @app.delete("/api/asistentes/{asistente_id}")
 def eliminar_asistente(asistente_id: int):
     start_time = time.time()
@@ -379,24 +434,51 @@ def eliminar_asistente(asistente_id: int):
     cur = conn.cursor()
     
     try:
+        # Verificar si el asistente existe
+        cur.execute("SELECT id, nombre FROM asistente WHERE id = %s", (asistente_id,))
+        asistente = cur.fetchone()
+        if not asistente:
+            raise HTTPException(status_code=404, detail="❌ Asistente no encontrado")
+        
+        # Verificar si está registrado en eventos
+        cur.execute("""
+            SELECT COUNT(*) as total,
+                   STRING_AGG(DISTINCT e.nombre, ', ' LIMIT 5) as eventos
+            FROM evento_asistente ea
+            JOIN evento_lugar el ON ea.evento_lugar_id = el.id
+            JOIN evento e ON el.evento_id = e.id
+            WHERE ea.asistente_id = %s
+        """, (asistente_id,))
+        
+        result = cur.fetchone()
+        eventos_count = result[0]
+        eventos_nombres = result[1] if result[1] else ""
+        
+        if eventos_count > 0:
+            mensaje_eventos = eventos_nombres
+            if eventos_count > 5:
+                mensaje_eventos += f"... y {eventos_count - 5} más"
+            
+            raise HTTPException(
+                status_code=400,
+                detail=f" No se puede eliminar al asistente '{asistente[1]}' porque está registrado en {eventos_count} evento(s): {mensaje_eventos}. Primero elimina sus registros de eventos."
+            )
+        
         cur.execute("DELETE FROM asistente WHERE id = %s RETURNING id", (asistente_id,))
-        eliminado = cur.fetchone()
         conn.commit()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"DELETE /api/asistentes/{asistente_id} tomó: {elapsed:.2f} ms")
-        
-        if eliminado:
-            return {"mensaje": "Asistente eliminado", "id": asistente_id}
-        else:
-            raise HTTPException(status_code=404, detail="Asistente no encontrado")
+        return {
+            "mensaje": f" Asistente '{asistente[1]}' eliminado exitosamente",
+            "id": asistente_id
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cur.close()
         return_conn(conn)
-
 
 # ==================================================
 #  ENDPOINTS: EVENTOS
@@ -410,18 +492,28 @@ def get_eventos():
     
     try:
         cur.execute("""
-            SELECT e.id, e.nombre, e.fecha, t.nombre AS tipo, e.created_at
+            SELECT e.id, e.nombre, e.fecha, e.hora_inicio, t.nombre AS tipo,
+                   l.id as lugar_id, l.nombre as lugar_nombre, l.direccion
             FROM evento e
             LEFT JOIN tipo_evento t ON e.tipo_id = t.id
-            ORDER BY e.id
+            LEFT JOIN evento_lugar el ON e.id = el.evento_id
+            LEFT JOIN lugar l ON el.lugar_id = l.id
+            ORDER BY e.id DESC
         """)
         rows = cur.fetchall()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"GET /api/eventos tomó: {elapsed:.2f} ms")
+        print(f" GET /api/eventos tomó: {(time.time() - start_time) * 1000:.2f} ms")
         
-        return [{"id": r[0], "nombre": r[1], "fecha": str(r[2]),
-                "tipo": r[3], "created_at": str(r[4])} for r in rows]
+        return [{
+            "id": r[0],
+            "nombre": r[1],
+            "fecha": str(r[2]),
+            "hora_inicio": str(r[3]) if r[3] else None,
+            "tipo": r[4] if r[4] else "Sin tipo",
+            "lugar_id": r[5],
+            "lugar_nombre": r[6] if r[6] else "No asignado",
+            "direccion": r[7] if r[7] else ""
+        } for r in rows]
     finally:
         cur.close()
         return_conn(conn)
@@ -433,17 +525,35 @@ def crear_evento(evento: dict):
     cur = conn.cursor()
     
     try:
+        # Validaciones
+        if not evento.get("lugar_id"):
+            raise HTTPException(status_code=400, detail="❌ El lugar es obligatorio")
+        
+        # Insertar evento (con hora_inicio aquí mismo)
         cur.execute(
-            "INSERT INTO evento (nombre, fecha, tipo_id) VALUES (%s, %s, %s) RETURNING id",
-            (evento["nombre"], evento["fecha"], evento.get("tipo_id"))
+            """INSERT INTO evento (nombre, fecha, hora_inicio, tipo_id) 
+               VALUES (%s, %s, %s, %s) 
+               RETURNING id""",
+            (evento["nombre"], evento["fecha"], 
+             evento.get("hora_inicio"), evento.get("tipo_id"))
         )
-        nuevo_id = cur.fetchone()[0]
+        evento_id = cur.fetchone()[0]
+        
+        # Crear relación evento-lugar
+        cur.execute(
+            """INSERT INTO evento_lugar (evento_id, lugar_id)
+               VALUES (%s, %s)""",
+            (evento_id, evento["lugar_id"])
+        )
+        
         conn.commit()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"POST /api/eventos tomó: {elapsed:.2f} ms")
+        print(f" POST /api/eventos tomó: {(time.time() - start_time) * 1000:.2f} ms")
         
-        return {"mensaje": "Evento creado", "id": nuevo_id}
+        return {
+            "mensaje": " Evento creado exitosamente",
+            "id": evento_id
+        }
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -458,23 +568,36 @@ def actualizar_evento(evento_id: int, evento: dict):
     cur = conn.cursor()
     
     try:
+        # Actualizar evento
         cur.execute(
             """UPDATE evento 
-               SET nombre = %s, fecha = %s, tipo_id = %s
+               SET nombre = %s, fecha = %s, hora_inicio = %s, tipo_id = %s
                WHERE id = %s
                RETURNING id""",
-            (evento["nombre"], evento["fecha"], evento.get("tipo_id"), evento_id)
+            (evento["nombre"], evento["fecha"], 
+             evento.get("hora_inicio"), evento.get("tipo_id"), evento_id)
         )
-        row = cur.fetchone()
-        conn.commit()
         
-        if not row:
+        if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Evento no encontrado")
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"PUT /api/eventos/{evento_id} tomó: {elapsed:.2f} ms")
+        # Actualizar relación evento-lugar
+        if evento.get("lugar_id"):
+            cur.execute(
+                """DELETE FROM evento_lugar WHERE evento_id = %s""",
+                (evento_id,)
+            )
+            cur.execute(
+                """INSERT INTO evento_lugar (evento_id, lugar_id)
+                   VALUES (%s, %s)""",
+                (evento_id, evento["lugar_id"])
+            )
         
-        return {"mensaje": "Evento actualizado", "id": evento_id}
+        conn.commit()
+        
+        print(f" PUT /api/eventos/{evento_id} tomó: {(time.time() - start_time) * 1000:.2f} ms")
+        
+        return {"mensaje": " Evento actualizado", "id": evento_id}
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -489,17 +612,32 @@ def eliminar_evento(evento_id: int):
     cur = conn.cursor()
     
     try:
+        # Verificar si tiene asistentes
+        cur.execute(
+            "SELECT COUNT(*) FROM evento_asistente WHERE evento_id = %s",
+            (evento_id,)
+        )
+        asistentes_count = cur.fetchone()[0]
+        
+        if asistentes_count > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f" No se puede eliminar: tiene {asistentes_count} asistente(s) registrado(s)"
+            )
+        
+        # Eliminar (ON DELETE CASCADE se encarga de evento_lugar)
         cur.execute("DELETE FROM evento WHERE id = %s RETURNING id", (evento_id,))
         eliminado = cur.fetchone()
         conn.commit()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"DELETE /api/eventos/{evento_id} tomó: {elapsed:.2f} ms")
-        
-        if eliminado:
-            return {"mensaje": "Evento eliminado", "id": evento_id}
-        else:
+        if not eliminado:
             raise HTTPException(status_code=404, detail="Evento no encontrado")
+        
+        print(f"DELETE /api/eventos/{evento_id} tomó: {(time.time() - start_time) * 1000:.2f} ms")
+        
+        return {"mensaje": " Evento eliminado", "id": evento_id}
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -507,7 +645,41 @@ def eliminar_evento(evento_id: int):
         cur.close()
         return_conn(conn)
 
-
+@app.get("/api/eventos/{evento_id}")
+def get_evento(evento_id: int):
+    start_time = time.time()
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT e.id, e.nombre, e.fecha, e.hora_inicio, e.tipo_id, t.nombre AS tipo,
+                   l.id as lugar_id, l.nombre as lugar_nombre, l.direccion
+            FROM evento e
+            LEFT JOIN tipo_evento t ON e.tipo_id = t.id
+            LEFT JOIN evento_lugar el ON e.id = el.evento_id
+            LEFT JOIN lugar l ON el.lugar_id = l.id
+            WHERE e.id = %s
+        """, (evento_id,))
+        
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Evento no encontrado")
+        
+        return {
+            "id": row[0],
+            "nombre": row[1],
+            "fecha": str(row[2]),
+            "hora_inicio": str(row[3]) if row[3] else None,
+            "tipo_id": row[4],
+            "tipo": row[5] if row[5] else "Sin tipo",
+            "lugar_id": row[6],
+            "lugar_nombre": row[7] if row[7] else "No asignado",
+            "direccion": row[8] if row[8] else ""
+        }
+    finally:
+        cur.close()
+        return_conn(conn)
 # ==================================================
 #  ENDPOINTS: EVENTO_LUGAR
 # ==================================================

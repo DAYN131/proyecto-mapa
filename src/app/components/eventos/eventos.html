@@ -1,154 +1,123 @@
-<div class="eventos-container">
+<div class="container">
+    <header class="header">
+        <h1> Gestión de Eventos</h1>
+        <p>Administración de eventos, sedes y horarios</p>
+        <div class="badge-info">
+             Los campos marcados con * son obligatorios.
+        </div>
+    </header>
 
-  <!-- Header -->
-  <div class="eventos-header">
-    <div class="header-left">
-      <h1> Gestión de Eventos</h1>
-      <span class="total-badge">{{ eventosFiltrados.length }} eventos</span>
+    <div class="card form-card">
+        <h2>{{ editandoId ? ' Editar evento' : ' Registrar nuevo evento' }}</h2>
+        <form (ngSubmit)="editandoId ? actualizarEvento() : registrarEvento()">
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label for="nombre">Nombre del evento *</label>
+                    <input type="text" id="nombre" name="nombre" 
+                           [(ngModel)]="nuevoEvento.nombre" 
+                           placeholder="Ej: Conferencia de Tecnología 2024" 
+                           required>
+                </div>
+
+                <div class="input-group">
+                    <label for="fecha">Fecha *</label>
+                    <input type="date" id="fecha" name="fecha" 
+                           [(ngModel)]="nuevoEvento.fecha" 
+                           required>
+                </div>
+
+                <div class="input-group">
+                    <label for="hora_inicio">Hora de inicio</label>
+                    <input type="time" id="hora_inicio" name="hora_inicio" 
+                           [(ngModel)]="nuevoEvento.hora_inicio">
+                    <small class="hint">Formato: HH:MM (opcional)</small>
+                </div>
+
+                <div class="input-group">
+                    <label for="tipo">Tipo de evento</label>
+                    <select id="tipo" name="tipo" 
+                            [(ngModel)]="nuevoEvento.tipo_id">
+                        <option [value]="undefined">Seleccione un tipo</option>
+                        <option *ngFor="let tipo of tipos" [value]="tipo.id">
+                            {{ tipo.nombre }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="lugar">Lugar del evento *</label>
+                    <select id="lugar" name="lugar" 
+                            [(ngModel)]="nuevoEvento.lugar_id" 
+                            required>
+                        <option [value]="0" disabled>Seleccione un lugar</option>
+                        <option *ngFor="let lugar of lugares" [value]="lugar.id">
+                            {{ lugar.nombre }} - {{ lugar.direccion }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="loading">
+                    {{ loading ? ' Procesando...' : (editandoId ? ' Actualizar' : ' Registrar') }}
+                </button>
+                <button type="button" *ngIf="editandoId" class="btn btn-secondary" 
+                        (click)="cancelarEdicion()" [disabled]="loading">
+                     Cancelar
+                </button>
+            </div>
+
+            <div *ngIf="successMessage" class="feedback-message success">
+                {{ successMessage }}
+            </div>
+            <div *ngIf="errorMessage" class="feedback-message error">
+                {{ errorMessage }}
+            </div>
+        </form>
     </div>
-    <button class="btn-agregar" (click)="abrirFormulario()">
-      + Nuevo Evento
-    </button>
-  </div>
 
-  <!-- Barra de búsqueda y filtros -->
-  <div class="toolbar">
-    <input
-      class="buscador"
-      type="text"
-      placeholder="Buscar por nombre o lugar..."
-      [(ngModel)]="busqueda"
-    />
-    <div class="filtros-tipo">
-      <button
-        *ngFor="let tipo of tiposFiltro"
-        class="chip"
-        [class.active]="filtroTabla === (tipo === 'todos' ? 'todos' : tipo.nombre)"
-        (click)="filtroTabla = (tipo === 'todos' ? 'todos' : tipo.nombre)"
-      >
-        {{ tipo === 'todos' ? 'Todos' : tipo.nombre }}
-      </button>
+    <div class="card list-card">
+        <div class="list-header">
+            <h2> Eventos registrados</h2>
+            <span class="record-badge">{{ eventos.length }} evento{{ eventos.length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="table-responsive">
+            <div *ngIf="loading && eventos.length === 0" class="loading-indicator">
+                 Cargando eventos...
+            </div>
+            <table *ngIf="!loading || eventos.length > 0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Tipo</th>
+                        <th>Lugar</th>
+                        <th>Dirección</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let evento of eventos; trackBy: trackById">
+                        <td class="cell-id">{{ evento.id }}</td>
+                        <td>{{ evento.nombre }}</td>
+                        <td>{{ evento.fecha | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ evento.hora_inicio || '—' }}</td>
+                        <td>{{ evento.tipo || 'Sin tipo' }}</td>
+                        <td>{{ evento.lugar_nombre || 'No asignado' }}</td>
+                        <td>{{ evento.direccion || '—' }}</td>
+                        <td class="acciones">
+                            <button class="btn-edit" (click)="editarEvento(evento)" [disabled]="loading">
+                                 Editar
+                            </button>
+                            <button class="btn-delete" (click)="eliminarEvento(evento.id!, evento.nombre)" [disabled]="loading">
+                                 Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
-
-  <!-- Tabla de eventos -->
-  <div class="tabla-wrapper">
-    <table class="tabla-eventos">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nombre</th>
-          <th>Tipo</th>
-          <th>Fecha</th>
-          <th>Lugar</th>
-          <th>Descripción</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let evento of eventosFiltrados; let i = index">
-          <td class="td-id">{{ i + 1 }}</td>
-          <td class="td-nombre">{{ evento.nombre }}</td>
-          <td>
-            <span class="badge-tipo" [style.background]="getColorTipo(evento.tipo)">
-              {{ evento.tipo }}
-            </span>
-          </td>
-          <td>{{ evento.fecha | date:'dd/MM/yyyy' }}</td>
-          <td class="td-lugar">{{ evento.lugar || 'No asignado' }}</td>
-          <td class="td-desc">{{ evento.descripcion || 'Sin descripción' }}</td>
-          <td>
-            <button class="btn-eliminar" (click)="eliminarEvento(evento.id)" title="Eliminar evento">
-            </button>
-          </td>
-        </tr>
-        <tr *ngIf="eventosFiltrados.length === 0">
-          <td colspan="7" class="td-empty">
-            📭 No se encontraron eventos. ¡Crea uno nuevo!
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Modal formulario -->
-  <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
-    <div class="modal-form" (click)="$event.stopPropagation()">
-
-      <div class="modal-form-header">
-        <h2>➕ Nuevo Evento</h2>
-        <button class="btn-cerrar" (click)="cerrarFormulario()">✕</button>
-      </div>
-
-      <div class="form-grid">
-
-        <div class="form-group full">
-          <label>Nombre del evento *</label>
-          <input 
-            type="text" 
-            [(ngModel)]="nuevoEvento.nombre" 
-            placeholder="Ej: Conferencia de Tecnología 2024"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>Tipo de evento *</label>
-          <select [(ngModel)]="nuevoEvento.tipo_id">
-            <option [value]="null" disabled>Selecciona un tipo</option>
-            <option *ngFor="let tipo of tipos" [value]="tipo.id">
-              {{ tipo.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Fecha *</label>
-          <input type="date" [(ngModel)]="nuevoEvento.fecha" />
-        </div>
-
-        <div class="form-group full">
-          <label>Lugar *</label>
-          <input 
-            type="text" 
-            [(ngModel)]="nuevoEvento.lugar" 
-            placeholder="Ej: Auditorio Principal"
-          />
-        </div>
-
-       
-
-        <div class="form-group full">
-          <label>Descripción</label>
-          <textarea 
-            [(ngModel)]="nuevoEvento.descripcion" 
-            rows="3" 
-            placeholder="Describe brevemente el evento..."
-          ></textarea>
-        </div>
-
-      </div>
-
-      <div class="form-actions">
-        <button class="btn-cancelar" type="button" (click)="cerrarFormulario()">
-          Cancelar
-        </button>
-        <button 
-          class="btn-guardar" 
-          type="button"
-          (click)="agregarEvento()"
-          [disabled]="!nuevoEvento.nombre || !nuevoEvento.fecha || !nuevoEvento.lugar || !nuevoEvento.tipo_id"
-        >
-          {{ cargando ? 'Guardando...' : 'Guardar Evento' }}
-        </button>
-      </div>
-
-      <!-- Indicador de carga dentro del modal -->
-      <div class="modal-loading" *ngIf="cargando">
-        <div class="spinner"></div>
-        <p>Procesando...</p>
-      </div>
-
-    </div>
-  </div>
-
 </div>
