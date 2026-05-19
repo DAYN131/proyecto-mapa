@@ -800,7 +800,6 @@ def eliminar_evento_lugar(evento_lugar_id: int):
 # ==================================================
 #  ENDPOINTS: EVENTO_ASISTENTE
 # ==================================================
-
 @app.get("/api/evento-asistente")
 def get_evento_asistente():
     start_time = time.time()
@@ -808,21 +807,52 @@ def get_evento_asistente():
     cur = conn.cursor()
     
     try:
+        # Consulta que devuelve TODOS los campos que espera el frontend
         cur.execute("""
-            SELECT ea.id, a.nombre AS asistente, e.nombre AS evento, l.nombre AS lugar
+            SELECT 
+                ea.id,
+                a.nombre AS asistente,
+                a.email AS asistente_email,
+                a.telefono AS asistente_telefono,
+                a.seccion AS asistente_seccion,
+                e.nombre AS evento,
+                e.fecha AS fecha_evento,
+                ea.created_at AS fecha_registro
             FROM evento_asistente ea
             JOIN asistente a ON ea.asistente_id = a.id
-            JOIN evento_lugar el ON ea.evento_lugar_id = el.id
-            JOIN evento e ON el.evento_id = e.id
-            JOIN lugar l ON el.lugar_id = l.id
-            ORDER BY ea.id
+            JOIN evento e ON ea.evento_id = e.id
+            ORDER BY ea.id DESC
         """)
         rows = cur.fetchall()
         
-        elapsed = (time.time() - start_time) * 1000
-        print(f"GET /api/evento-asistente tomó: {elapsed:.2f} ms")
+        print(f" Se encontraron {len(rows)} registros")
         
-        return [{"id": r[0], "asistente": r[1], "evento": r[2], "lugar": r[3]} for r in rows]
+        elapsed = (time.time() - start_time) * 1000
+        print(f" GET /api/evento-asistente tomó: {elapsed:.2f} ms")
+        
+        # Formatear la respuesta como espera el frontend
+        resultados = []
+        for r in rows:
+            resultados.append({
+                "id": r[0],
+                "asistente": r[1],
+                "asistente_email": r[2],
+                "asistente_telefono": str(r[3]) if r[3] else None,
+                "asistente_seccion": str(r[4]) if r[4] else None,
+                "evento": r[5],
+                "fecha_evento": str(r[6]) if r[6] else None,
+                "fecha_registro": str(r[7]) if r[7] else None,
+                "lugar": "Por definir"  # Temporal
+            })
+        
+        print(f" Enviando {len(resultados)} registros al frontend")
+        return resultados
+        
+    except Exception as e:
+        print(f" Error en get_evento_asistente: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         return_conn(conn)
@@ -834,25 +864,70 @@ def registrar_asistente(ea: dict):
     cur = conn.cursor()
     
     try:
+        print(f" Datos recibidos: {ea}")
+        
+        # Validar datos requeridos
+        if not ea.get("asistente_id") or not ea.get("evento_id"):
+            raise HTTPException(
+                status_code=400, 
+                detail=" Faltan datos: asistente_id y evento_id son obligatorios"
+            )
+        
+        # Verificar que el asistente existe
+        cur.execute("SELECT id, nombre FROM asistente WHERE id = %s", (ea["asistente_id"],))
+        asistente = cur.fetchone()
+        if not asistente:
+            raise HTTPException(status_code=404, detail=f" Asistente con ID {ea['asistente_id']} no existe")
+        
+        # Verificar que el evento_lugar existe (usando evento_id)
+        cur.execute("""
+            SELECT el.id, e.nombre 
+            FROM evento_lugar el
+            JOIN evento e ON el.evento_id = e.id
+            WHERE el.id = %s
+        """, (ea["evento_id"],))
+        evento_lugar = cur.fetchone()
+        if not evento_lugar:
+            raise HTTPException(status_code=404, detail=f" Evento-Lugar con ID {ea['evento_id']} no existe")
+        
+        # Verificar que no esté duplicado
+        cur.execute("""
+            SELECT id FROM evento_asistente 
+            WHERE asistente_id = %s AND evento_id = %s
+        """, (ea["asistente_id"], ea["evento_id"]))
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400, 
+                detail=f" El asistente '{asistente[1]}' ya está registrado en este evento"
+            )
+        
+        # Insertar registro (usando evento_id, NO evento_lugar_id)
         cur.execute(
-            """INSERT INTO evento_asistente (evento_lugar_id, asistente_id)
+            """INSERT INTO evento_asistente (asistente_id, evento_id) 
                VALUES (%s, %s) 
                RETURNING id""",
-            (ea["evento_lugar_id"], ea["asistente_id"])
+            (ea["asistente_id"], ea["evento_id"])
         )
         nuevo_id = cur.fetchone()[0]
         conn.commit()
         
         elapsed = (time.time() - start_time) * 1000
-        print(f"POST /api/evento-asistente tomó: {elapsed:.2f} ms")
+        print(f" POST /api/evento-asistente tomó: {elapsed:.2f} ms")
         
-        return {"mensaje": "Asistente registrado al evento", "id": nuevo_id}
+        return {
+            "mensaje": f" Asistente '{asistente[1]}' registrado al evento exitosamente",
+            "id": nuevo_id
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
+        print(f" Error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         cur.close()
         return_conn(conn)
+
 
 @app.delete("/api/evento-asistente/{evento_asistente_id}")
 def eliminar_asistente_evento(evento_asistente_id: int):
@@ -861,20 +936,67 @@ def eliminar_asistente_evento(evento_asistente_id: int):
     cur = conn.cursor()
     
     try:
+        # Verificar que existe y obtener datos
+        cur.execute("""
+            SELECT ea.id, a.nombre, e.nombre 
+            FROM evento_asistente ea
+            JOIN asistente a ON ea.asistente_id = a.id
+            JOIN evento_lugar el ON ea.evento_id = el.id
+            JOIN evento e ON el.evento_id = e.id
+            WHERE ea.id = %s
+        """, (evento_asistente_id,))
+        
+        registro = cur.fetchone()
+        if not registro:
+            raise HTTPException(status_code=404, detail=" Registro no encontrado")
+        
+        # Eliminar
         cur.execute("DELETE FROM evento_asistente WHERE id = %s RETURNING id", (evento_asistente_id,))
-        eliminado = cur.fetchone()
         conn.commit()
         
         elapsed = (time.time() - start_time) * 1000
-        print(f"DELETE /api/evento-asistente/{evento_asistente_id} tomó: {elapsed:.2f} ms")
+        print(f" DELETE /api/evento-asistente/{evento_asistente_id} tomó: {elapsed:.2f} ms")
         
-        if eliminado:
-            return {"mensaje": "Asistente removido del evento", "id": evento_asistente_id}
-        else:
-            raise HTTPException(status_code=404, detail="Registro no encontrado")
+        return {
+            "mensaje": f" Asistente '{registro[1]}' removido del evento '{registro[2]}'",
+            "id": evento_asistente_id
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
+        print(f" Error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cur.close()
+        return_conn(conn)
+
+
+@app.get("/api/eventos-para-asistente")
+def get_eventos_para_asistente():
+    start_time = time.time()
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT el.id, e.nombre AS evento, l.nombre AS lugar, 
+                   el.fecha_evento, el.hora_inicio
+            FROM evento_lugar el
+            JOIN evento e ON el.evento_id = e.id
+            JOIN lugar l ON el.lugar_id = l.id
+            WHERE el.fecha_evento >= CURRENT_DATE
+            ORDER BY el.fecha_evento ASC
+        """)
+        rows = cur.fetchall()
+        
+        return [{
+            "id": r[0],
+            "evento": r[1],
+            "lugar": r[2],
+            "fecha": str(r[3]) if r[3] else None,
+            "hora": str(r[4]) if r[4] else None
+        } for r in rows]
     finally:
         cur.close()
         return_conn(conn)

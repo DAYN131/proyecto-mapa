@@ -171,6 +171,11 @@ export class MapaEventosComponent implements OnInit {
     this.router.navigate(['/lugares']);
   }
 
+  abrirModalRegistroAsistentes() {
+    this.menuVisible = false;
+    this.router.navigate(['/registro-asistentes']);
+  }
+
   abrirModalAsistentes() {
     this.menuVisible = false;
     this.router.navigate(['/asistentes']);

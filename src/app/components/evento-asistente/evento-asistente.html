@@ -1,0 +1,222 @@
+<div class="container">
+    <!-- Encabezado -->
+    <header class="header">
+        <h1>
+            <i class="fas fa-calendar-alt"></i> 
+            Registro de Asistentes a Eventos
+        </h1>
+        <p>
+            <i class="fas fa-users"></i> 
+            Gestión de participantes por evento
+        </p>
+        <div class="badge-info">
+            <i class="fas fa-info-circle"></i> 
+            Registra asistentes a eventos y visualiza todos los participantes por evento.
+        </div>
+    </header>
+
+    <!-- Formulario de registro -->
+    <div class="card form-card">
+        <h2>
+            <i class="fas fa-user-plus"></i> 
+            Nuevo Registro
+        </h2>
+        <form (ngSubmit)="registrar()">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="evento">
+                        <i class="fas fa-calendar-check"></i> 
+                        Seleccionar Evento *
+                    </label>
+                    <select id="evento" [(ngModel)]="nuevoRegistro.evento_id" name="evento_id" required>
+                        <option [value]="0" disabled>-- Seleccione un evento --</option>
+                        <option *ngFor="let evento of eventos" [value]="evento.id">
+                            <i class="fas fa-calendar-day"></i> 
+                            {{ evento.nombre }} - {{ evento.fecha | date:'dd/MM/yyyy' }}
+                        </option>
+                    </select>
+                    <small class="hint">
+                        <i class="fas fa-map-marker-alt"></i> 
+                        Evento al que se registrará el asistente
+                    </small>
+                </div>
+
+                <div class="input-group">
+                    <label for="asistente">
+                        <i class="fas fa-user"></i> 
+                        Seleccionar Asistente *
+                    </label>
+                    <select id="asistente" [(ngModel)]="nuevoRegistro.asistente_id" name="asistente_id" required>
+                        <option [value]="0" disabled>-- Seleccione un asistente --</option>
+                        <option *ngFor="let asistente of asistentes" [value]="asistente.id">
+                            <i class="fas fa-user-circle"></i> 
+                            {{ asistente.nombre }} - {{ asistente.email }}
+                        </option>
+                    </select>
+                    <small class="hint">
+                        <i class="fas fa-id-card"></i> 
+                        Asistente que participará en el evento
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" [disabled]="loading">
+                    <i class="fas" [class.fa-spinner]="loading" [class.fa-pulse]="loading" [class.fa-save]="!loading"></i>
+                    {{ loading ? ' Procesando...' : ' Registrar Asistente' }}
+                </button>
+            </div>
+
+            <!-- Mensajes de feedback -->
+            <div *ngIf="successMessage" class="feedback-message success">
+                <i class="fas fa-check-circle"></i> 
+                {{ successMessage }}
+            </div>
+            <div *ngIf="errorMessage" class="feedback-message error">
+                <i class="fas fa-exclamation-triangle"></i> 
+                {{ errorMessage }}
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de registros agrupados por evento -->
+    <div class="card list-card">
+        <div class="list-header">
+            <h2>
+                <i class="fas fa-clipboard-list"></i> 
+                Asistentes por Evento
+            </h2>
+            <span class="record-badge">
+                <i class="fas fa-users"></i> 
+                {{ totalRegistros }} registro{{ totalRegistros !== 1 ? 's' : '' }}
+            </span>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                    type="text" 
+                    [(ngModel)]="busquedaEvento" 
+                    (input)="filtrarEventos()"
+                    placeholder="Buscar evento por nombre..."
+                    class="search-input">
+                <button *ngIf="busquedaEvento" (click)="limpiarBusqueda()" class="clear-search" title="Limpiar búsqueda">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="search-stats" *ngIf="busquedaEvento">
+                <i class="fas fa-filter"></i> 
+                Mostrando {{ eventosFiltrados.length }} de {{ registrosPorEvento.length }} eventos
+            </div>
+        </div>
+
+        <div *ngIf="loading && registros.length === 0" class="loading-indicator">
+            <i class="fas fa-spinner fa-pulse"></i> 
+            Cargando registros...
+        </div>
+
+        <div *ngIf="!loading && eventosFiltrados.length === 0" class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <p *ngIf="busquedaEvento">
+                <i class="fas fa-search"></i> 
+                No se encontraron eventos con "{{ busquedaEvento }}"
+            </p>
+            <p *ngIf="!busquedaEvento">
+                <i class="fas fa-info-circle"></i> 
+                No hay asistentes registrados en eventos
+            </p>
+            <small *ngIf="!busquedaEvento">
+                <i class="fas fa-user-plus"></i> 
+                Registra el primer asistente usando el formulario
+            </small>
+            <button *ngIf="busquedaEvento" (click)="limpiarBusqueda()" class="btn-clear-search">
+                <i class="fas fa-eraser"></i> 
+                Limpiar búsqueda
+            </button>
+        </div>
+
+        <!-- Agrupar por evento (filtrado) -->
+        <div *ngFor="let grupo of eventosFiltrados" class="evento-group">
+            <div class="evento-header">
+                <div class="evento-info">
+                    <span class="evento-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </span>
+                    <div>
+                        <h3>
+                            <i class="fas fa-tag"></i> 
+                            {{ grupo.evento }}
+                        </h3>
+                        <div class="evento-meta">
+                            <span>
+                                <i class="fas fa-calendar-day"></i> 
+                                {{ grupo.fecha_evento | date:'dd/MM/yyyy' }}
+                            </span>
+                            <span *ngIf="grupo.hora_evento">
+                                <i class="fas fa-clock"></i> 
+                                {{ grupo.hora_evento }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <span class="evento-count">
+                    <i class="fas fa-user-friends"></i> 
+                    {{ grupo.asistentes.length }} asistente{{ grupo.asistentes.length !== 1 ? 's' : '' }}
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-user"></i> Asistente</th>
+                            <th><i class="fas fa-envelope"></i> Email</th>
+                            <th><i class="fas fa-phone"></i> Teléfono</th>
+                            <th><i class="fas fa-layer-group"></i> Sección</th>
+                            <th><i class="fas fa-calendar-plus"></i> Fecha Registro</th>
+                            <th><i class="fas fa-cog"></i> Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let registro of grupo.asistentes; trackBy: trackById">
+                            <td class="cell-id">{{ registro.id }}</td>
+                            <td class="asistente-nombre">
+                                <i class="fas fa-user-circle"></i> 
+                                {{ registro.asistente_nombre }}
+                            </td>
+                            <td class="email-cell">
+                                <a [href]="'mailto:' + registro.asistente_email" class="email-link">
+                                    <i class="fas fa-envelope"></i> 
+                                    {{ registro.asistente_email }}
+                                </a>
+                            </td>
+                            <td>
+                                <i class="fas fa-phone-alt"></i> 
+                                {{ registro.asistente_telefono || '—' }}
+                            </td>
+                            <td>
+                                <i class="fas fa-tag"></i> 
+                                {{ registro.asistente_seccion || '—' }}
+                            </td>
+                            <td>
+                                <i class="fas fa-clock"></i> 
+                                {{ registro.fecha_registro | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                            <td class="acciones">
+                                <button class="btn-delete" (click)="eliminarRegistro(registro.id, registro.asistente_nombre, grupo.evento)" [disabled]="loading" title="Eliminar">
+                                    <i class="fas fa-trash-alt"></i> 
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
