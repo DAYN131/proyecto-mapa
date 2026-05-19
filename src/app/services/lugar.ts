@@ -16,11 +16,13 @@ export interface Lugar {
     providedIn: 'root'
 })
 export class LugarService {
-    private apiUrl = '/api/lugares';
+    // USA LA URL COMPLETA DEL BACKEND
+    private apiUrl = 'http://localhost:8000/api/lugares';
 
     constructor(private http: HttpClient) { }
 
     getLugares(): Observable<Lugar[]> {
+        console.log('GET Lugares desde:', this.apiUrl);
         return this.http.get<Lugar[]>(this.apiUrl);
     }
 
@@ -29,11 +31,14 @@ export class LugarService {
     }
 
     crearLugar(lugar: Lugar): Observable<any> {
+        console.log('POST a:', this.apiUrl, lugar);
         return this.http.post(this.apiUrl, lugar);
     }
 
     actualizarLugar(id: number, lugar: Lugar): Observable<Lugar> {
-        return this.http.put<Lugar>(`${this.apiUrl}/${id}`, lugar);
+        const url = `${this.apiUrl}/${id}`;
+        console.log('PUT a:', url, lugar);
+        return this.http.put<Lugar>(url, lugar);
     }
 
     eliminarLugar(id: number): Observable<any> {

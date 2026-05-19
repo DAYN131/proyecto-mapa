@@ -6,6 +6,7 @@ import { EventosComponent } from './components/eventos/eventos';
 import { LoginComponent } from './components/login/login';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import {LugaresComponent} from './components/lugares/lugares';
+import { TipoEventoComponent } from './components/tipo-evento/tipo-evento';
 
 export const routes: Routes = [
 { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -15,4 +16,5 @@ export const routes: Routes = [
 { path: 'login', component: LoginComponent },
 { path: 'lugares', component: LugaresComponent },
 { path: 'dashboard', component: DashboardComponent },
+{ path: 'tipo-evento', component: TipoEventoComponent },
 ];

@@ -56,7 +56,7 @@
 }
 
 /* Formulario */
-.place-form {
+.tipo-form {
   margin-top: 0.5rem;
 }
 
@@ -249,35 +249,43 @@ tr:hover td {
   font-weight: 700;
   color: #FF6F61;
   font-family: monospace;
+  width: 80px;
 }
 
-.coord-cell {
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  background: #f2f6f9;
-  padding: 0.2rem 0.6rem;
-  border-radius: 1rem;
-  text-align: center;
-  display: inline-block;
+.tipo-nombre {
+  font-weight: 500;
+  color: #1A2B4C;
 }
 
-.map-link {
-  background: #eef3fc;
+.acciones {
+  white-space: nowrap;
+  width: 180px;
+}
+
+/* Botones de acción específicos para tipo-evento */
+.btn-edit {
+  background: transparent;
+  border: 1px solid #b8d9f5;
   padding: 0.35rem 1rem;
   border-radius: 2rem;
-  text-decoration: none;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #346888;
-  transition: background 0.2s;
-  white-space: nowrap;
-  min-width: 100px;
-  display: inline-block;
+  color: #4A90E2;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  margin-right: 8px;
 }
 
-.map-link:hover {
-  background: #346888;
+.btn-edit:hover {
+  background: #4A90E2;
+  border-color: #4A90E2;
   color: white;
+}
+
+.btn-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-delete {
@@ -304,32 +312,6 @@ tr:hover td {
   cursor: not-allowed;
 }
 
-.btn-edit {
-  background: transparent;
-  border: 1px solid #b8d9f5;
-  padding: 0.35rem 1rem;
-  border-radius: 2rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #4A90E2;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  margin-right: 8px;
-}
-
-.btn-edit:hover {
-  background: #4A90E2;
-  border-color: #4A90E2;
-  color: white;
-}
-
-.btn-edit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-
 /* Responsive */
 @media (max-width: 780px) {
   .container {
@@ -351,8 +333,14 @@ tr:hover td {
   .badge-info {
     max-width: 100%;
   }
-  .coord-cell {
-    font-size: 0.65rem;
-    padding: 0.15rem 0.4rem;
+  .acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: auto;
+  }
+  .btn-edit, .btn-delete {
+    width: 100%;
+    margin-right: 0;
   }
 }

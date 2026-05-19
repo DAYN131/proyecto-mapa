@@ -1,0 +1,79 @@
+<div class="container">
+  <!-- Encabezado -->
+  <header class="header">
+    <h1> Tipos de Evento</h1>
+    <p>Gestión de categorías para clasificar eventos</p>
+    <div class="badge-info">
+      Los tipos de evento te ayudan a organizar mejor tus eventos (Conciertos, Conferencias, Talleres, etc.)
+    </div>
+  </header>
+
+  <div class="card form-card">
+    <h2>{{ editandoId ? ' Editar tipo de evento' : ' Registrar nuevo tipo' }}</h2>
+    <form class="tipo-form" (ngSubmit)="editandoId ? actualizarTipo() : registrarTipo()">
+      <div class="form-grid">
+        <div class="input-group full-width">
+          <label for="nombre">Nombre del tipo de evento</label>
+          <input type="text" id="nombre" name="nombre" 
+                 [(ngModel)]="nuevoTipo.nombre" 
+                 placeholder="Ej: Conferencia, Taller, Concierto, Seminario" 
+                 required>
+          <small class="hint">Ejemplos: Conferencia, Taller, Concierto, Seminario, Workshop</small>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          {{ loading ? ' Procesando...' : (editandoId ? ' Actualizar tipo' : ' Registrar tipo') }}
+        </button>
+        <button type="button" *ngIf="editandoId" class="btn btn-secondary" 
+                (click)="cancelarEdicion()" [disabled]="loading">
+           Cancelar
+        </button>
+      </div>
+      
+      <!-- Mensajes de feedback -->
+      <div *ngIf="successMessage" class="feedback-message success">
+         {{ successMessage }}
+      </div>
+      <div *ngIf="errorMessage" class="feedback-message error">
+         {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+
+  <!-- Listado de tipos -->
+  <div class="card list-card">
+    <div class="list-header">
+      <h2> Tipos de evento registrados</h2>
+      <span class="record-badge">{{ tipos.length }} tipo{{ tipos.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <div class="table-responsive">
+      <div *ngIf="loading && tipos.length === 0" class="loading-indicator">
+         Cargando tipos...
+      </div>
+      <table *ngIf="!loading || tipos.length > 0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre del tipo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tipo of tipos; trackBy: trackById">
+            <td class="cell-id">{{ tipo.id }}</td>
+            <td class="tipo-nombre">{{ tipo.nombre }}</td>
+            <td class="acciones">
+              <button class="btn-edit" (click)="editarTipo(tipo)" [disabled]="loading">
+                 Editar
+              </button>
+              <button class="btn-delete" (click)="eliminarTipo(tipo.id!)" [disabled]="loading">
+                 Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

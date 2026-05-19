@@ -1,5 +1,5 @@
 // components/lugares/lugares.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LugarService, Lugar } from '../../services/lugar';
@@ -9,9 +9,9 @@ import { LugarService, Lugar } from '../../services/lugar';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './lugares.html',
-  styleUrls: ['./lugares.css']
+  styleUrls: ['./lugares.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush 
 })
-
 export class LugaresComponent implements OnInit {
   // Lista de lugares
   lugares: Lugar[] = [];
@@ -32,8 +32,14 @@ export class LugaresComponent implements OnInit {
   
   // Variable para el enlace de Google Maps temporal
   gmapsLinkInput = '';
+  
+  // Variable para identificar si estamos editando
+  editandoId: number | null = null;
 
-  constructor(private lugarService: LugarService) { }
+  constructor(
+    private lugarService: LugarService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.cargarLugares();
@@ -42,16 +48,23 @@ export class LugaresComponent implements OnInit {
   // Cargar todos los lugares desde el backend
   cargarLugares(): void {
     this.loading = true;
+    this.cdr.markForCheck();  
+    
     this.lugarService.getLugares().subscribe({
       next: (data) => {
-        this.lugares = data;
+        this.lugares = [...data];  
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error al cargar lugares:', error);
-        this.errorMessage = 'Error al cargar los lugares. Por favor, intenta nuevamente.';
+        console.error('Error:', error);
+        this.errorMessage = ' Error al cargar los lugares';
         this.loading = false;
-        setTimeout(() => this.errorMessage = '', 3000);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.errorMessage = '';
+          this.cdr.markForCheck();
+        }, 3000);
       }
     });
   }
@@ -81,32 +94,89 @@ export class LugaresComponent implements OnInit {
     return null;
   }
 
+  // Preparar formulario para editar un lugar
+  editarLugar(lugar: Lugar): void {
+    this.editandoId = lugar.id!;
+    this.nuevoLugar = {
+      nombre: lugar.nombre,
+      direccion: lugar.direccion,
+      lat: lugar.lat,
+      lng: lugar.lng,
+      gmapslink: lugar.gmapslink
+    };
+    this.gmapsLinkInput = lugar.gmapslink || '';
+    this.cdr.detectChanges();
+    
+    // Scroll suave al formulario
+    document.querySelector('.form-card')?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+  }
+
+  // Actualizar un lugar existente
+ actualizarLugar(): void {
+   
+    // Validaciones
+    if (!this.nuevoLugar.nombre || !this.nuevoLugar.direccion || !this.gmapsLinkInput) {
+        console.log(' Validación falló - campos vacíos');
+        this.errorMessage = ' Todos los campos son obligatorios';
+        setTimeout(() => this.errorMessage = '', 3000);
+        return;
+    }
+    
+    const coords = this.extraerCoordenadas(this.gmapsLinkInput);
+    if (!coords) {
+        console.log(' Validación falló - coordenadas no extraídas');
+        this.errorMessage = ' No se pudieron extraer las coordenadas del enlace';
+        setTimeout(() => this.errorMessage = '', 4000);
+        return;
+    }
+    
+    console.log(' Validación exitosa, coordenadas:', coords);
+    
+    const lugarParaActualizar = {
+        nombre: this.nuevoLugar.nombre,
+        direccion: this.nuevoLugar.direccion,
+        lat: coords.lat,
+        lng: coords.lng,
+        gmapslink: this.gmapsLinkInput
+    };
+    
+    
+    this.loading = true;
+    this.cdr.detectChanges();
+
+    this.lugarService.actualizarLugar(this.editandoId!, lugarParaActualizar).subscribe({
+        next: (respuesta) => {
+            console.log(' Respuesta exitosa:', respuesta);
+        },
+        error: (error) => {
+            console.error(' Error en petición:', error);
+            console.error('Status:', error.status);
+            console.error('URL:', error.url);
+        }
+    });
+}
+
   // Registrar un nuevo lugar
   registrarLugar(): void {
-    // Validar campos
+    // Validaciones
     if (!this.nuevoLugar.nombre || !this.nuevoLugar.direccion || !this.gmapsLinkInput) {
       this.errorMessage = ' Todos los campos son obligatorios';
       setTimeout(() => this.errorMessage = '', 3000);
       return;
     }
     
-    // Extraer coordenadas del enlace
     const coords = this.extraerCoordenadas(this.gmapsLinkInput);
     if (!coords) {
-      this.errorMessage = ' No se pudieron extraer las coordenadas del enlace. Asegúrate de que contenga ?q=lat,lng o @lat,lng';
+      this.errorMessage = ' No se pudieron extraer las coordenadas del enlace';
       setTimeout(() => this.errorMessage = '', 4000);
       return;
     }
     
-    // Validar coordenadas
-    if (coords.lat < -90 || coords.lat > 90 || coords.lng < -180 || coords.lng > 180) {
-      this.errorMessage = ' Coordenadas inválidas';
-      setTimeout(() => this.errorMessage = '', 3000);
-      return;
-    }
-    
-    // Preparar objeto para enviar al backend
-    const lugarParaEnviar: Lugar = {
+    // Preparar datos para enviar
+    const lugarParaEnviar = {
       nombre: this.nuevoLugar.nombre,
       direccion: this.nuevoLugar.direccion,
       lat: coords.lat,
@@ -115,38 +185,69 @@ export class LugaresComponent implements OnInit {
     };
     
     this.loading = true;
+    this.cdr.detectChanges();
+
     this.lugarService.crearLugar(lugarParaEnviar).subscribe({
-      next: (nuevoLugar) => {
-        this.successMessage = ' Lugar registrado exitosamente';
-        this.cargarLugares(); // Recargar la lista
+      next: (respuesta) => {
+        const nuevoLugarCompleto: Lugar = {
+          id: respuesta.id,
+          nombre: lugarParaEnviar.nombre,
+          direccion: lugarParaEnviar.direccion,
+          lat: lugarParaEnviar.lat,
+          lng: lugarParaEnviar.lng,
+          gmapslink: lugarParaEnviar.gmapslink
+        };
+        
+        this.lugares = [nuevoLugarCompleto, ...this.lugares];
+        this.cdr.markForCheck();
+        
+        this.successMessage = ` "${this.nuevoLugar.nombre}" registrado exitosamente`;
         this.resetFormulario();
         this.loading = false;
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
-        console.error('Error al registrar lugar:', error);
-        this.errorMessage = ' Error al registrar el lugar. Por favor, intenta nuevamente.';
+        console.error('Error detallado:', error);
+        let mensajeError = ' Error al registrar el lugar';
+        if (error.status === 0) {
+          mensajeError = ' No se puede conectar al backend. Verifica que FastAPI esté corriendo';
+        } else if (error.error?.detail) {
+          mensajeError = ` ${error.error.detail}`;
+        }
+        this.errorMessage = mensajeError;
         this.loading = false;
-        setTimeout(() => this.errorMessage = '', 3000);
+        this.cdr.markForCheck();
+        setTimeout(() => this.errorMessage = '', 4000);
       }
     });
+  }
+
+  // Cancelar edición
+  cancelarEdicion(): void {
+    this.editandoId = null;
+    this.resetFormulario();
+    this.cdr.detectChanges();
   }
 
   // Eliminar un lugar
   eliminarLugar(id: number): void {
     if (confirm('¿Estás seguro de que deseas eliminar este lugar?')) {
       this.loading = true;
+      this.cdr.markForCheck();
+      
       this.lugarService.eliminarLugar(id).subscribe({
         next: () => {
+          this.lugares = this.lugares.filter(lugar => lugar.id !== id);
+          this.cdr.markForCheck();
           this.successMessage = ' Lugar eliminado correctamente';
-          this.cargarLugares(); // Recargar la lista
           this.loading = false;
           setTimeout(() => this.successMessage = '', 3000);
         },
         error: (error) => {
-          console.error('Error al eliminar lugar:', error);
+          console.error('Error al eliminar:', error);
           this.errorMessage = ' Error al eliminar el lugar';
           this.loading = false;
+          this.cdr.markForCheck();
           setTimeout(() => this.errorMessage = '', 3000);
         }
       });
@@ -163,33 +264,11 @@ export class LugaresComponent implements OnInit {
       gmapslink: ''
     };
     this.gmapsLinkInput = '';
+    this.cdr.detectChanges();
   }
 
-  // Cargar lugares de ejemplo (opcional)
-  cargarEjemplos(): void {
-    const ejemplos = [
-      {
-        nombre: "Teatro Mayor",
-        direccion: "Calle 45 # 20-30, Bogotá",
-        gmapsLink: "https://www.google.com/maps?q=4.6672,-74.1079"
-      },
-      {
-        nombre: "Centro Citibanamex",
-        direccion: "Av. del Conscripto 311, CDMX",
-        gmapsLink: "https://www.google.com/maps?q=19.4647,-99.2394"
-      },
-      {
-        nombre: "Feria de Madrid",
-        direccion: "Madrid, España",
-        gmapsLink: "https://www.google.com/maps?q=40.4675,-3.6276"
-      }
-    ];
-    
-    ejemplos.forEach(ejemplo => {
-      this.nuevoLugar.nombre = ejemplo.nombre;
-      this.nuevoLugar.direccion = ejemplo.direccion;
-      this.gmapsLinkInput = ejemplo.gmapsLink;
-      this.registrarLugar();
-    });
+  // TrackBy para optimizar el renderizado de la tabla
+  trackById(index: number, lugar: Lugar): number {
+    return lugar.id || index;
   }
 }

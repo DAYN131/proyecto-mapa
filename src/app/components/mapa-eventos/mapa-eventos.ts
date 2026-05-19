@@ -153,7 +153,6 @@ export class MapaEventosComponent implements OnInit {
 
   async ngOnInit() {
     if (this.isBrowser) {
-      await this.cargarLeafletSiEsNecesario();
       this.inicializarMapa();
     }
   }
@@ -175,6 +174,11 @@ export class MapaEventosComponent implements OnInit {
   abrirModalAsistentes() {
     this.menuVisible = false;
     this.router.navigate(['/asistentes']);
+  }
+
+  abrirModalTipos(){
+    this.menuVisible = false;
+    this.router.navigate(['/tipo-evento']);
   }
 
   abrirModalEventos() {
@@ -211,21 +215,6 @@ export class MapaEventosComponent implements OnInit {
   // Mapa
   // ──────────────────────────────────────────────
 
-  private async cargarLeafletSiEsNecesario(): Promise<any> {
-    if (typeof L !== 'undefined') return true;
-
-    return new Promise((resolve) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => resolve(true);
-      document.head.appendChild(script);
-    });
-  }
 
   inicializarMapa() {
     if (!this.isBrowser || typeof L === 'undefined') return;

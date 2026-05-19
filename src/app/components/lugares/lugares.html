@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro de Lugares - Gestión de Eventos</title>
-</head>
-<body>
- <!-- components/lugares/lugares.html -->
 <div class="container">
   <!-- Encabezado -->
   <header class="header">
@@ -18,8 +9,8 @@
   </header>
 
   <div class="card form-card">
-    <h2> Registrar nuevo lugar</h2>
-    <form class="place-form" (ngSubmit)="registrarLugar()" #lugarForm="ngForm">
+    <h2>{{ editandoId ? ' Editar lugar' : ' Registrar nuevo lugar' }}</h2>
+    <form class="place-form" (ngSubmit)="editandoId ? actualizarLugar() : registrarLugar()" #lugarForm="ngForm">
       <div class="form-grid">
         <div class="input-group">
           <label for="nombre">Nombre del lugar</label>
@@ -43,10 +34,11 @@
       </div>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" [disabled]="loading">
-          {{ loading ? ' Registrando...' : ' Registrar lugar' }}
+          {{ loading ? ' Procesando...' : (editandoId ? ' Actualizar lugar' : ' Registrar lugar') }}
         </button>
-        <button type="button" class="btn btn-secondary" (click)="cargarEjemplos()" [disabled]="loading">
-           Cargar ejemplos
+        <button type="button" *ngIf="editandoId" class="btn btn-secondary" 
+                (click)="cancelarEdicion()" [disabled]="loading">
+           Cancelar
         </button>
       </div>
       
@@ -83,7 +75,7 @@
           </tr>
         </thead>
       <tbody>
-            <tr *ngFor="let lugar of lugares">
+            <tr *ngFor="let lugar of lugares; trackBy: trackById">
               <td class="cell-id">{{ lugar.id }}</td>
               <td>{{ lugar.nombre }}</td>
               <td>{{ lugar.direccion }}</td>
@@ -94,17 +86,16 @@
               <td><span class="coord-cell">{{ lugar.lat | number:'1.6' }}</span></td>
               <td><span class="coord-cell">{{ lugar.lng | number:'1.6' }}</span></td>
               <td>
+                <button class="btn-edit" (click)="editarLugar(lugar)" [disabled]="loading">
+                   Editar
+                </button>
                 <button class="btn-delete" (click)="eliminarLugar(lugar.id!)" [disabled]="loading">
                    Eliminar
                 </button>
               </td>
-            </tr>
+             </tr>
           </tbody>
-      </table>
+       </table>
     </div>
   </div>
 </div>
-
- 
-</body>
-</html>
