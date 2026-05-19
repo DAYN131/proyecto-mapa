@@ -114,49 +114,79 @@ export class LugaresComponent implements OnInit {
     });
   }
 
-  // Actualizar un lugar existente
- actualizarLugar(): void {
-   
-    // Validaciones
-    if (!this.nuevoLugar.nombre || !this.nuevoLugar.direccion || !this.gmapsLinkInput) {
-        console.log(' Validación falló - campos vacíos');
-        this.errorMessage = ' Todos los campos son obligatorios';
-        setTimeout(() => this.errorMessage = '', 3000);
-        return;
-    }
-    
-    const coords = this.extraerCoordenadas(this.gmapsLinkInput);
-    if (!coords) {
-        console.log(' Validación falló - coordenadas no extraídas');
-        this.errorMessage = ' No se pudieron extraer las coordenadas del enlace';
-        setTimeout(() => this.errorMessage = '', 4000);
-        return;
-    }
-    
-    console.log(' Validación exitosa, coordenadas:', coords);
-    
-    const lugarParaActualizar = {
-        nombre: this.nuevoLugar.nombre,
-        direccion: this.nuevoLugar.direccion,
-        lat: coords.lat,
-        lng: coords.lng,
-        gmapslink: this.gmapsLinkInput
-    };
-    
-    
-    this.loading = true;
-    this.cdr.detectChanges();
 
-    this.lugarService.actualizarLugar(this.editandoId!, lugarParaActualizar).subscribe({
-        next: (respuesta) => {
-            console.log(' Respuesta exitosa:', respuesta);
-        },
-        error: (error) => {
-            console.error(' Error en petición:', error);
-            console.error('Status:', error.status);
-            console.error('URL:', error.url);
-        }
-    });
+actualizarLugar(): void {
+  // Validaciones
+  if (!this.nuevoLugar.nombre || !this.nuevoLugar.direccion || !this.gmapsLinkInput) {
+    this.errorMessage = ' Todos los campos son obligatorios';
+    setTimeout(() => this.errorMessage = '', 3000);
+    return;
+  }
+  
+  const coords = this.extraerCoordenadas(this.gmapsLinkInput);
+  if (!coords) {
+    this.errorMessage = ' No se pudieron extraer las coordenadas del enlace';
+    setTimeout(() => this.errorMessage = '', 4000);
+    return;
+  }
+  
+  const lugarParaActualizar = {
+    nombre: this.nuevoLugar.nombre,
+    direccion: this.nuevoLugar.direccion,
+    lat: coords.lat,
+    lng: coords.lng,
+    gmapslink: this.gmapsLinkInput
+  };
+  
+  this.loading = true;
+  this.cdr.detectChanges();
+
+  this.lugarService.actualizarLugar(this.editandoId!, lugarParaActualizar).subscribe({
+    next: (respuesta) => {
+      // Actualizar el lugar en la lista local
+      const index = this.lugares.findIndex(l => l.id === this.editandoId);
+      if (index !== -1) {
+        this.lugares[index] = {
+          id: this.editandoId!,
+          nombre: lugarParaActualizar.nombre,
+          direccion: lugarParaActualizar.direccion,
+          lat: lugarParaActualizar.lat,
+          lng: lugarParaActualizar.lng,
+          gmapslink: lugarParaActualizar.gmapslink
+        };
+        // Forzar actualización de la vista (importante para OnPush)
+        this.lugares = [...this.lugares];
+      }
+      
+      this.successMessage = ` "${this.nuevoLugar.nombre}" actualizado exitosamente`;
+      this.resetFormulario();
+      this.cancelarEdicion();
+      this.loading = false;
+      this.cdr.detectChanges();
+      
+      setTimeout(() => {
+        this.successMessage = '';
+        this.cdr.detectChanges();
+      }, 3000);
+    },
+    error: (error) => {
+      console.error(' Error:', error);
+      let mensajeError = ' Error al actualizar el lugar';
+      if (error.status === 0) {
+        mensajeError = ' No se puede conectar al backend. Verifica que FastAPI esté corriendo';
+      } else if (error.error?.detail) {
+        mensajeError = ` ${error.error.detail}`;
+      }
+      this.errorMessage = mensajeError;
+      this.loading = false;
+      this.cdr.detectChanges();
+      
+      setTimeout(() => {
+        this.errorMessage = '';
+        this.cdr.detectChanges();
+      }, 4000);
+    }
+  });
 }
 
   // Registrar un nuevo lugar

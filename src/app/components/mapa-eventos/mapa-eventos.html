@@ -1,69 +1,61 @@
+<!-- src/app/components/mapa-eventos/mapa-eventos.html -->
 <div class="mapa-eventos-container">
 
-  <!-- Header -->
-<div class="header">
-  <div class="logo">
-    <span class="icon-location"></span>
-    <h1>Mapa Eventos</h1>
+  <div class="header">
+    <div class="logo">
+      <i class="fas fa-map-marked-alt"></i>
+      <h1>Mapa Eventos</h1>
+    </div>
+
+    <div class="dropdown">
+      <button class="btn-primary" (click)="menuVisible = !menuVisible">
+        <i class="fas fa-bars"></i> Menú
+      </button>
+      <ul class="dropdown-menu" [class.show]="menuVisible">
+        <li><a (click)="abrirModalLugares()"><i class="fas fa-location-dot"></i> Lugares</a></li>
+        <li><a (click)="abrirModalTipos()"><i class="fas fa-tags"></i> Tipos de Eventos</a></li>
+        <li><a (click)="abrirModalEventos()"><i class="fas fa-calendar-alt"></i> Lista de Eventos</a></li>
+        <li><a (click)="abrirModalAsistentes()"><i class="fas fa-users"></i> Asistentes</a></li>
+        <li><a (click)="abrirModalRegistroAsistentes()"><i class="fas fa-user-plus"></i> Registro Asistentes</a></li>
+        <li><a (click)="abrirModalEstadisticas()"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
+        <li><a (click)="abrirDashboard()"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      </ul>
+    </div>
   </div>
 
-  <div class="dropdown">
-    <button class="btn-primary" (click)="menuVisible = !menuVisible">
-      Menú
-    </button>
-    <ul class="dropdown-menu" [class.show]="menuVisible">
-      <li><a (click)="abrirModalLugares()">Lugares</a></li>
-      <li><a (click)="abrirModalTipos()">Tipos de Eventos</a></li>
-      <li><a (click)="abrirModalEventos()">Lista de Eventos</a></li>
-      <li><a (click)="abrirModalAsistentes()">Asistentes</a></li>
-      <li><a (click)="abrirModalRegistroAsistentes()"> Registro Asistentes</a></li>
-      <li><a (click)="abrirModalEstadisticas()">Estadísticas</a></li>
-      <li><a (click)="abrirDashboard()">Dashboard</a></li>
-    </ul>
+  <div *ngIf="loading" class="loading-indicator">
+    <i class="fas fa-spinner fa-pulse"></i> Cargando eventos...
   </div>
-</div>
 
-  <!-- Filtros -->
-  <div class="filtros">
-    <button (click)="filtrarEventos('todos')"
-            [class.active]="filtroActivo === 'todos'"
-            class="filter-btn">
-      <i class="icon-all"></i> Todos
+  <div class="filtros" *ngIf="!loading">
+    <button (click)="filtrarEventos('todos')" [class.active]="filtroActivo === 'todos'" class="filter-btn">
+      <i class="fas fa-globe-americas"></i> Todos
     </button>
-    <button (click)="filtrarEventos('concierto')"
-            [class.active]="filtroActivo === 'concierto'"
-            class="filter-btn">
-      <i class="icon-music"></i> Conciertos
+    <button (click)="filtrarEventos('concierto')" [class.active]="filtroActivo === 'concierto'" class="filter-btn">
+      <i class="fas fa-music"></i> Conciertos
     </button>
-    <button (click)="filtrarEventos('teatro')"
-            [class.active]="filtroActivo === 'teatro'"
-            class="filter-btn">
-      <i class="icon-theater"></i> Teatro
+    <button (click)="filtrarEventos('teatro')" [class.active]="filtroActivo === 'teatro'" class="filter-btn">
+      <i class="fas fa-masks-theater"></i> Teatro
     </button>
-    <button (click)="filtrarEventos('exposicion')"
-            [class.active]="filtroActivo === 'exposicion'"
-            class="filter-btn">
-      <i class="icon-art"></i> Exposiciones
+    <button (click)="filtrarEventos('exposicion')" [class.active]="filtroActivo === 'exposicion'" class="filter-btn">
+      <i class="fas fa-palette"></i> Exposiciones
     </button>
-    <button (click)="filtrarEventos('taller')"
-            [class.active]="filtroActivo === 'taller'"
-            class="filter-btn">
-      <i class="icon-workshop"></i> Talleres
+    <button (click)="filtrarEventos('taller')" [class.active]="filtroActivo === 'taller'" class="filter-btn">
+      <i class="fas fa-chalkboard-user"></i> Talleres
     </button>
-    <button (click)="filtrarEventos('festival')"
-            [class.active]="filtroActivo === 'festival'"
-            class="filter-btn">
-      <i class="icon-festival"></i> Festivales
+    <button (click)="filtrarEventos('festival')" [class.active]="filtroActivo === 'festival'" class="filter-btn">
+      <i class="fas fa-star"></i> Festivales
     </button>
   </div>
 
-  <!-- Botón zonas -->
   <button (click)="mostrarOcultarSecciones()" class="toggle-section">
-    <i [class]="mostrarSecciones ? 'icon-eye-off' : 'icon-eye'"></i>
+    <i [class]="mostrarSecciones ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
     {{ mostrarSecciones ? 'Ocultar' : 'Mostrar' }} Zonas
   </button>
 
-  <!-- Mapa — los popups los maneja Leaflet directamente -->
-  <div id="map"></div>
+  <div *ngIf="errorMessage" class="error-message">
+    <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}
+  </div>
 
+  <div id="map"></div>
 </div>
