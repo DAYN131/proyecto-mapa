@@ -4,6 +4,7 @@ from config import load_config
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import time
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
@@ -50,6 +51,30 @@ def return_conn(conn):
     connection_pool.putconn(conn)
 
 
+@app.get("/api/secciones-geojson")
+async def get_secciones_geojson():
+    return FileResponse("SECCIONES.geojson", media_type="application/json")
+
+
+# Nuevo endpoint en backend
+@app.get("/api/tipos-para-filtros")
+def get_tipos_para_filtros():
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT DISTINCT LOWER(t.nombre) as tipo, t.nombre as nombre_original
+            FROM tipo_evento t
+            JOIN evento e ON e.tipo_id = t.id
+            ORDER BY t.nombre
+        """)
+        rows = cur.fetchall()
+        return [{"valor": r[0], "nombre": r[1]} for r in rows]
+    finally:
+        cur.close()
+        return_conn(conn)
+
+        
 # ==================================================
 #  ENDPOINTS: LUGARES
 # ==================================================

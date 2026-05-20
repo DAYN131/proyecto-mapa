@@ -38,6 +38,11 @@ export interface Lugar {
     lng: number;
 }
 
+export interface TipoFiltro {
+    valor: string;   // ej: 'concierto'
+    nombre: string;  // ej: 'Concierto'
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -55,11 +60,9 @@ export class EventoService {
     getEventosConCoordenadas(): Observable<EventoMapa[]> {
         return this.http.get<Evento[]>(`${this.apiUrl}/eventos`).pipe(
             map(eventos => {
-                // Filtrar eventos que tienen lugar_id y cargar coordenadas
-                // Nota: Las coordenadas vienen del lugar, no del evento directamente
                 return eventos.filter(e => e.lugar_id).map(e => ({
                     ...e,
-                    lat: 0, // Temporal, se actualizará con los lugares
+                    lat: 0,
                     lng: 0,
                     direccion: e.direccion || ''
                 } as EventoMapa));
@@ -70,6 +73,11 @@ export class EventoService {
     // Obtener un evento específico
     getEvento(id: number): Observable<Evento> {
         return this.http.get<Evento>(`${this.apiUrl}/eventos/${id}`);
+    }
+
+    // ✅ NUEVO MÉTODO: Obtener tipos para filtros
+    getTiposParaFiltros(): Observable<TipoFiltro[]> {
+        return this.http.get<TipoFiltro[]>(`${this.apiUrl}/tipos-para-filtros`);
     }
 
     // Crear evento

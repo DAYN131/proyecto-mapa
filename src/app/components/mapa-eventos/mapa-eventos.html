@@ -27,31 +27,34 @@
     <i class="fas fa-spinner fa-pulse"></i> Cargando eventos...
   </div>
 
-  <div class="filtros" *ngIf="!loading">
-    <button (click)="filtrarEventos('todos')" [class.active]="filtroActivo === 'todos'" class="filter-btn">
-      <i class="fas fa-globe-americas"></i> Todos
-    </button>
-    <button (click)="filtrarEventos('concierto')" [class.active]="filtroActivo === 'concierto'" class="filter-btn">
-      <i class="fas fa-music"></i> Conciertos
-    </button>
-    <button (click)="filtrarEventos('teatro')" [class.active]="filtroActivo === 'teatro'" class="filter-btn">
-      <i class="fas fa-masks-theater"></i> Teatro
-    </button>
-    <button (click)="filtrarEventos('exposicion')" [class.active]="filtroActivo === 'exposicion'" class="filter-btn">
-      <i class="fas fa-palette"></i> Exposiciones
-    </button>
-    <button (click)="filtrarEventos('taller')" [class.active]="filtroActivo === 'taller'" class="filter-btn">
-      <i class="fas fa-chalkboard-user"></i> Talleres
-    </button>
-    <button (click)="filtrarEventos('festival')" [class.active]="filtroActivo === 'festival'" class="filter-btn">
-      <i class="fas fa-star"></i> Festivales
-    </button>
-  </div>
-
-  <button (click)="mostrarOcultarSecciones()" class="toggle-section">
-    <i [class]="mostrarSecciones ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-    {{ mostrarSecciones ? 'Ocultar' : 'Mostrar' }} Zonas
+ <!-- Filtros dinámicos -->
+<div class="filtros" *ngIf="!loading">
+  <!-- Botón "Todos" siempre presente -->
+  <button (click)="filtrarEventos('todos')" 
+          [class.active]="filtroActivo === 'todos'" 
+          class="filter-btn">
+    <i class="fas fa-globe-americas"></i> Todos
   </button>
+  
+  <!-- Botones dinámicos desde el backend -->
+  <button *ngFor="let tipo of tiposFiltro" 
+          (click)="filtrarEventos(tipo.valor)" 
+          [class.active]="filtroActivo === tipo.valor" 
+          class="filter-btn">
+    <i [class]="iconosFiltros[tipo.valor] || 'fas fa-tag'"></i>
+    {{ tipo.nombre }}
+  </button>
+</div>
+
+
+
+  <div class="toggle-wrapper" *ngIf="!loading">
+  <button (click)="toggleSeccionesElectorales()" class="toggle-section" 
+          [class.active]="mostrarSeccionesElectorales">
+    <i class="fas fa-map"></i>
+    {{ mostrarSeccionesElectorales ? 'Ocultar' : 'Mostrar' }} Secciones Electorales
+  </button>
+</div>
 
   <div *ngIf="errorMessage" class="error-message">
     <i class="fas fa-exclamation-triangle"></i> {{ errorMessage }}

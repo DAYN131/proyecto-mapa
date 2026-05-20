@@ -2,7 +2,7 @@
 import { Component, OnInit, Inject, PLATFORM_ID, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { EventoService, Evento } from '../../services/evento';
+import { EventoService, Evento,TipoFiltro  } from '../../services/evento';
 import { LugarService, Lugar } from '../../services/lugar';
 import { forkJoin } from 'rxjs';
 
@@ -20,7 +20,9 @@ export class MapaEventosComponent implements OnInit {
   menuVisible: boolean = false;
   filtroActivo: string = 'todos';
   mostrarSecciones: boolean = true;
+  mostrarSeccionesElectorales: boolean = false;
 
+  capaSecciones: any = null;
   mapa: any;
   marcadores: any[] = [];
   capaZonas: any = null;
@@ -31,10 +33,12 @@ export class MapaEventosComponent implements OnInit {
   lugaresReales: Lugar[] = [];
   eventosConCoordenadas: any[] = [];
   
+  // ✅ NUEVO: Lista de tipos para los filtros (viene del backend)
+  tiposFiltro: TipoFiltro[] = [];
+  
   loading: boolean = true;
   errorMessage: string = '';
 
-  // Colores por tipo
   coloresPorTipo: { [key: string]: string } = {
     'concierto': '#E24B4A',
     'teatro': '#7F77DD',
@@ -45,7 +49,6 @@ export class MapaEventosComponent implements OnInit {
     'deportivo': '#3498DB'
   };
 
-  // Iconos FontAwesome
   iconosPorTipo: { [key: string]: string } = {
     'concierto': 'fa-music',
     'teatro': 'fa-masks-theater',
@@ -54,6 +57,18 @@ export class MapaEventosComponent implements OnInit {
     'exposicion': 'fa-camera',
     'conferencia': 'fa-chalkboard-user',
     'deportivo': 'fa-futbol'
+  };
+
+  // Mapeo de iconos para los filtros
+  iconosFiltros: { [key: string]: string } = {
+    'concierto': 'fas fa-music',
+    'teatro': 'fas fa-masks-theater',
+    'festival': 'fas fa-star',
+    'taller': 'fas fa-palette',
+    'exposicion': 'fas fa-camera',
+    'conferencia': 'fas fa-chalkboard-user',
+    'deportivo': 'fas fa-futbol',
+    'todos': 'fas fa-globe-americas'
   };
 
   @HostListener('document:click', ['$event'])
@@ -77,7 +92,29 @@ export class MapaEventosComponent implements OnInit {
   ngOnInit() {
     if (this.isBrowser) {
       this.cargarDatos();
+      this.cargarTiposFiltro(); 
     }
+  }
+
+  cargarTiposFiltro() {
+    this.eventoService.getTiposParaFiltros().subscribe({
+      next: (tipos) => {
+        this.tiposFiltro = tipos;
+        this.cdr.detectChanges();
+        console.log(' Tipos para filtros cargados:', this.tiposFiltro);
+      },
+      error: (error) => {
+        console.error('❌ Error cargando tipos de filtro:', error);
+        // Fallback: usar tipos por defecto
+        this.tiposFiltro = [
+          { valor: 'concierto', nombre: 'Concierto' },
+          { valor: 'teatro', nombre: 'Teatro' },
+          { valor: 'festival', nombre: 'Festival' },
+          { valor: 'taller', nombre: 'Taller' },
+          { valor: 'exposicion', nombre: 'Exposición' }
+        ];
+      }
+    });
   }
 
   cargarDatos() {
@@ -124,6 +161,9 @@ export class MapaEventosComponent implements OnInit {
     });
   }
 
+  // ============================================
+  // MENÚ
+  // ============================================
   abrirModalLugares() { this.menuVisible = false; this.router.navigate(['/lugares']); }
   abrirModalRegistroAsistentes() { this.menuVisible = false; this.router.navigate(['/registro-asistentes']); }
   abrirModalAsistentes() { this.menuVisible = false; this.router.navigate(['/asistentes']); }
@@ -132,6 +172,9 @@ export class MapaEventosComponent implements OnInit {
   abrirDashboard() { this.menuVisible = false; this.router.navigate(['/dashboard']); }
   abrirModalEstadisticas() { this.menuVisible = false; alert('Estadísticas - Próximamente'); }
 
+  // ============================================
+  // FILTROS
+  // ============================================
   filtrarEventos(tipo: string) {
     this.filtroActivo = tipo;
     if (this.mapa) {
@@ -139,18 +182,103 @@ export class MapaEventosComponent implements OnInit {
     }
   }
 
-  mostrarOcultarSecciones() {
-    this.mostrarSecciones = !this.mostrarSecciones;
-    if (this.mapa) {
-      if (this.mostrarSecciones && !this.capaZonas) {
-        this.agregarZonasMapa();
-      } else if (!this.mostrarSecciones && this.capaZonas) {
-        this.mapa.removeLayer(this.capaZonas);
-        this.capaZonas = null;
-      }
+  // ============================================
+  // MOSTRAR/OCULTAR SECCIONES ELECTORALES
+  // ============================================
+  toggleSeccionesElectorales() {
+    this.mostrarSeccionesElectorales = !this.mostrarSeccionesElectorales;
+    
+    if (this.mostrarSeccionesElectorales && !this.capaSecciones) {
+      this.cargarSeccionesElectorales();
+    } else if (!this.mostrarSeccionesElectorales && this.capaSecciones) {
+      this.mapa.removeLayer(this.capaSecciones);
+      this.capaSecciones = null;
     }
   }
 
+  cargarSeccionesElectorales() {
+    if (!this.mapa || typeof L === 'undefined') return;
+    
+    const geojsonUrl = 'http://localhost:8000/api/secciones-geojson';
+    
+    fetch(geojsonUrl)
+      .then(response => response.json())
+      .then((data: any) => {
+        console.log('✅ GeoJSON cargado:', data);
+        
+        const colores = [
+          '#FF4444', '#44FF44', '#4444FF', '#FFFF44', '#FF44FF',
+          '#44FFFF', '#FF8844', '#88FF44', '#4488FF', '#FF4488',
+          '#88FF88', '#FF8888', '#8888FF', '#FFFF88', '#FF88FF'
+        ];
+        
+        this.capaSecciones = L.geoJSON(data, {
+          style: (feature: any) => {
+            const seccion = feature?.properties?.seccion || 0;
+            const color = colores[seccion % colores.length];
+            
+            return {
+              color: color,
+              weight: 1.5,
+              opacity: 0.9,
+              fillColor: color,
+              fillOpacity: 0.4
+            };
+          },
+          onEachFeature: (feature: any, layer: any) => {
+            const props = feature.properties;
+            const seccion = props.seccion || 0;
+            const color = colores[seccion % colores.length];
+            
+            layer.bindPopup(`
+              <div style="font-family:'Segoe UI'; min-width:180px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; border-bottom:2px solid ${color}; padding-bottom:5px;">
+                  <i class="fas fa-map-pin" style="color:${color}; font-size:16px;"></i>
+                  <b style="font-size:14px;">🗳️ Sección ${props.seccion}</b>
+                </div>
+                <div style="margin-bottom:5px;">
+                  <i class="fas fa-map-marked-alt" style="color:#666; width:25px;"></i>
+                  <strong>Distrito Federal:</strong> ${props.distrito_f}
+                </div>
+                <div style="margin-bottom:5px;">
+                  <i class="fas fa-map-pin" style="color:#666; width:25px;"></i>
+                  <strong>Distrito Local:</strong> ${props.distrito_l}
+                </div>
+                <div>
+                  <i class="fas fa-tag" style="color:#666; width:25px;"></i>
+                  <strong>Tipo:</strong> ${props.tipo === 2 ? '🏙️ Urbana' : '🌾 Rural'}
+                </div>
+              </div>
+            `);
+            
+            layer.on('mouseover', () => {
+              layer.setStyle({
+                weight: 3,
+                fillOpacity: 0.7,
+                color: '#FFFFFF'
+              });
+            });
+            
+            layer.on('mouseout', () => {
+              layer.setStyle({
+                weight: 1.5,
+                fillOpacity: 0.4,
+                color: color
+              });
+            });
+          }
+        }).addTo(this.mapa);
+        
+        console.log(' Secciones electorales cargadas');
+      })
+      .catch((error: any) => {
+        console.error(' Error:', error);
+      });
+  }
+
+  // ============================================
+  // MAPA Y MARCADORES
+  // ============================================
   inicializarMapa() {
     if (!this.isBrowser || typeof L === 'undefined') {
       console.error('Leaflet no disponible');
@@ -172,39 +300,9 @@ export class MapaEventosComponent implements OnInit {
 
     this.actualizarMarcadores();
 
-    if (this.mostrarSecciones) {
-      this.agregarZonasMapa();
-    }
-
     setTimeout(() => {
       this.mapa.invalidateSize();
     }, 100);
-  }
-
-  agregarZonasMapa() {
-    if (!this.mapa || typeof L === 'undefined') return;
-
-    const zonas = [
-      { nombre: 'Centro Histórico', coords: [[19.4326, -99.1332], [19.4400, -99.1200], [19.4250, -99.1250]], color: '#FF6B6B' },
-      { nombre: 'Polanco', coords: [[19.4330, -99.2000], [19.4400, -99.1900], [19.4250, -99.1950]], color: '#4ECDC4' }
-    ];
-
-    zonas.forEach(zona => {
-      const polygon = L.polygon(zona.coords, {
-        color: zona.color,
-        weight: 2,
-        opacity: 0.7,
-        fillColor: zona.color,
-        fillOpacity: 0.15
-      }).addTo(this.mapa);
-      
-      polygon.bindPopup(`<b>${zona.nombre}</b>`);
-      
-      if (!this.capaZonas) {
-        this.capaZonas = L.layerGroup().addTo(this.mapa);
-      }
-      this.capaZonas.addLayer(polygon);
-    });
   }
 
   actualizarMarcadores() {
@@ -230,7 +328,6 @@ export class MapaEventosComponent implements OnInit {
       const color = this.coloresPorTipo[tipo] || '#58C9B9';
       const iconoFont = this.iconosPorTipo[tipo] || 'fa-calendar-day';
       
-      // Marcador con FontAwesome - ESTILO QUE SÍ FUNCIONA
       const markerIcon = L.divIcon({
         className: 'custom-marker',
         html: `<div style="background-color:${color}; width:36px; height:36px; border-radius:50%; border:3px solid white; box-shadow:0 2px 5px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;"><i class="fas ${iconoFont}" style="color:white; font-size:16px;"></i></div>`,
@@ -242,7 +339,6 @@ export class MapaEventosComponent implements OnInit {
       const marker = L.marker([evento.lat, evento.lng], { icon: markerIcon })
         .addTo(this.mapa);
 
-      // Popup con FontAwesome
       marker.bindPopup(`
         <div style="min-width:220px; font-family:'Segoe UI'">
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; border-bottom:2px solid ${color}; padding-bottom:8px;">
