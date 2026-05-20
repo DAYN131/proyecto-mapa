@@ -1,77 +1,206 @@
-<div class="db-container">
-
-  <div class="db-header">
-    <div>
-      <h1>Dashboard de eventos</h1>
-      <p>Resumen general</p>
+<!-- src/app/components/dashboard/dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <i class="fas fa-chart-line"></i>
+      <h1>Dashboard Cultural</h1>
+      <p>Análisis de participación y actividad cultural</p>
     </div>
-    <button class="btn-pdf" (click)="exportarPDF()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="12" y1="18" x2="12" y2="12"/>
-        <line x1="9" y1="15" x2="15" y2="15"/>
-      </svg>
-      Exportar PDF
-    </button>
+    <div class="header-actions">
+  <button class="btn-pdf" (click)="exportarPDF()">
+    <i class="fas fa-file-pdf"></i> Exportar PDF
+  </button>
+  <button class="btn-map" (click)="irAMapa()">
+    <i class="fas fa-map-marked-alt"></i> Ver Mapa
+  </button>
+</div>
   </div>
 
-  <div class="metrics-grid">
-    <div class="metric-card" *ngFor="let m of metricas">
-      <p class="metric-label">{{ m.label }}</p>
-      <p class="metric-valor">{{ m.valor }}</p>
-      <p class="metric-tag" [ngClass]="'tag-' + m.tipo">{{ m.tag }}</p>
-    </div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+    <p>Cargando estadísticas...</p>
   </div>
 
-  <div class="charts-row">
-    <div class="card">
-      <p class="card-title">Eventos por mes</p>
-      <div class="legend">
-        <span><span class="leg-dot" style="background:#1D9E75"></span>Realizados</span>
-        <span><span class="leg-dot" style="background:#B5D4F4"></span>Planeados</span>
+  <!-- Error -->
+  <div *ngIf="errorMessage" class="error-container">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && stats" class="dashboard-content">
+    
+    <!-- Tarjetas de métricas principales -->
+    <div class="metrics-grid">
+      <div class="metric-card" (click)="irAEventos()">
+        <div class="metric-icon">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="metric-info">
+          <h3>{{ stats.total_eventos }}</h3>
+          <p>Eventos totales</p>
+        </div>
       </div>
-      <div class="chart-wrapper">
-        <canvas id="chartMes"></canvas>
+
+      <div class="metric-card" (click)="irAAsistentes()">
+        <div class="metric-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="metric-info">
+          <h3>{{ stats.total_asistentes }}</h3>
+          <p>Asistentes registrados</p>
+        </div>
+      </div>
+
+      <div class="metric-card" (click)="irALugares()">
+        <div class="metric-icon">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="metric-info">
+          <h3>{{ stats.total_lugares }}</h3>
+          <p>Lugares disponibles</p>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon">
+          <i class="fas fa-ticket-alt"></i>
+        </div>
+        <div class="metric-info">
+          <h3>{{ stats.total_registros }}</h3>
+          <p>Registros a eventos</p>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <p class="card-title">Por tipo</p>
-      <div class="chart-wrapper-sm">
-        <canvas id="chartTipo"></canvas>
+    <!-- Eventos por Tipo -->
+    <div class="chart-card">
+      <div class="card-header">
+        <i class="fas fa-chart-bar"></i>
+        <h2>Eventos por Tipo</h2>
       </div>
-      <div class="legend" style="margin-top: 10px;">
-        <span><span class="leg-dot" style="background:#1D9E75"></span>Concierto</span>
-        <span><span class="leg-dot" style="background:#378ADD"></span>Feria</span>
-        <span><span class="leg-dot" style="background:#7F77DD"></span>Cultural</span>
-        <span><span class="leg-dot" style="background:#EF9F27"></span>Deportivo</span>
+      <div class="chart-content">
+        <div *ngFor="let item of stats.eventos_por_tipo" class="bar-item">
+          <div class="bar-label">
+            <span class="bar-tag">{{ item.tipo }}</span>
+            <span class="bar-count">{{ item.total }}</span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" [style.width.%]="getPorcentaje(item.total, stats.total_eventos)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Eventos -->
+    <div class="two-columns">
+      <div class="data-card">
+        <div class="card-header">
+          <i class="fas fa-trophy"></i>
+          <h2>Top 5 Eventos</h2>
+        </div>
+        <div class="data-list">
+          <div *ngFor="let evento of stats.top_eventos; let i = index" class="list-item">
+            <div class="list-rank">{{ i + 1 }}</div>
+            <div class="list-info">
+              <div class="list-title">{{ evento.nombre }}</div>
+              <div class="list-subtitle">
+                <i class="fas fa-user-friends"></i> {{ evento.asistentes }} asistentes
+              </div>
+            </div>
+          </div>
+          <div *ngIf="stats.top_eventos.length === 0" class="empty-list">
+            <i class="fas fa-calendar-times"></i>
+            <p>No hay eventos con asistentes</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Lugares -->
+      <div class="data-card">
+        <div class="card-header">
+          <i class="fas fa-map-pin"></i>
+          <h2>Top 5 Lugares</h2>
+        </div>
+        <div class="data-list">
+          <div *ngFor="let lugar of stats.top_lugares; let i = index" class="list-item">
+            <div class="list-rank">{{ i + 1 }}</div>
+            <div class="list-info">
+              <div class="list-title">{{ lugar.nombre }}</div>
+              <div class="list-subtitle">
+                <i class="fas fa-calendar-alt"></i> {{ lugar.eventos }} eventos
+              </div>
+            </div>
+          </div>
+          <div *ngIf="stats.top_lugares.length === 0" class="empty-list">
+            <i class="fas fa-map-marker-alt"></i>
+            <p>No hay lugares con eventos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección Destacada -->
+    <div class="highlight-card" *ngIf="stats.seccion_top">
+      <div class="highlight-icon">
+        <i class="fas fa-crown"></i>
+      </div>
+      <div class="highlight-content">
+        <h3>Sección con Mayor Participación</h3>
+        <div class="highlight-info">
+          <span class="seccion-number">{{ stats.seccion_top.seccion }}</span>
+          <span class="seccion-stats">
+            <i class="fas fa-users"></i> {{ stats.seccion_top.asistentes }} asistentes únicos
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tasa de Participación -->
+    <div class="participation-card">
+      <div class="card-header">
+        <i class="fas fa-chart-pie"></i>
+        <h2>Tasa de Participación</h2>
+      </div>
+      <div class="participation-content">
+        <div class="participation-circle">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="10"/>
+            <circle cx="50" cy="50" r="45" fill="none" 
+                    stroke="#58C9B9" stroke-width="10"
+                    [style.stroke-dasharray]="'calc(2 * 3.14 * 45 * ' + stats.tasa_participacion + ' / 100) ' + 'calc(2 * 3.14 * 45 * (100 - ' + stats.tasa_participacion + ') / 100)'"
+                    stroke-dashoffset="0" stroke-linecap="round"
+                    transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="percentage">{{ stats.tasa_participacion }}%</div>
+        </div>
+        <div class="participation-text">
+          <p>De {{ stats.total_asistentes }} asistentes registrados,</p>
+          <p><strong>{{ stats.total_registros }}</strong> han participado en al menos un evento</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tendencia de Asistentes -->
+    <div class="trend-card" *ngIf="stats.asistentes_por_mes.length > 0">
+      <div class="card-header">
+        <i class="fas fa-chart-line"></i>
+        <h2>Tendencia de Participación</h2>
+      </div>
+      <div class="trend-bars">
+        <div *ngFor="let mes of stats.asistentes_por_mes.slice().reverse()" class="trend-item">
+          <div class="trend-label">{{ mes.mes }}</div>
+          <div class="trend-bar-container">
+            <div class="trend-bar-fill" 
+                 [style.height.%]="getPorcentaje(mes.asistentes, getMaxAsistentesMes())"
+                 [style.background]="'linear-gradient(to top, #58C9B9, #346888)'">
+              <span class="trend-value">{{ mes.asistentes }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
-  <div class="card">
-    <p class="card-title">Últimos eventos registrados</p>
-    <div class="tabla-wrapper">
-      <table class="tabla">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Lugar</th>
-            <th>Tipo</th>
-            <th class="text-right">Asistentes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let e of eventos">
-            <td class="td-nombre">{{ e.nombre }}</td>
-            <td class="td-lugar">{{ e.lugar }}</td>
-            <td><span class="badge" [ngClass]="'badge-' + e.tipo">{{ e.tipo }}</span></td>
-            <td class="text-right td-num">{{ e.asistentes | number }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
 </div>

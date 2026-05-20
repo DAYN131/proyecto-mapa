@@ -53,6 +53,125 @@ def return_conn(conn):
     connection_pool.putconn(conn)
 
 
+
+# ==================================================
+#  ENDPOINTS: DASHBOARD
+# ==================================================
+
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats():
+    start_time = time.time()
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    try:
+        stats = {}
+        
+        # 1. Total de eventos
+        cur.execute("SELECT COUNT(*) FROM evento")
+        stats["total_eventos"] = cur.fetchone()[0]
+        
+        # 2. Total de asistentes únicos
+        cur.execute("SELECT COUNT(*) FROM asistente")
+        stats["total_asistentes"] = cur.fetchone()[0]
+        
+        # 3. Total de lugares
+        cur.execute("SELECT COUNT(*) FROM lugar")
+        stats["total_lugares"] = cur.fetchone()[0]
+        
+        # 4. Total de registros (asistentes en eventos)
+        cur.execute("SELECT COUNT(*) FROM evento_asistente")
+        stats["total_registros"] = cur.fetchone()[0]
+        
+        # 5. Eventos por tipo (para gráfica de barras)
+        cur.execute("""
+            SELECT 
+                COALESCE(t.nombre, 'Sin tipo') as tipo,
+                COUNT(e.id) as total
+            FROM evento e
+            LEFT JOIN tipo_evento t ON e.tipo_id = t.id
+            GROUP BY t.nombre
+            ORDER BY total DESC
+        """)
+        stats["eventos_por_tipo"] = [{"tipo": r[0], "total": r[1]} for r in cur.fetchall()]
+        
+        # 6. Top 5 eventos con más asistentes
+        cur.execute("""
+            SELECT 
+                e.nombre,
+                COUNT(DISTINCT ea.asistente_id) as asistentes
+            FROM evento e
+            JOIN evento_asistente ea ON ea.evento_id = e.id
+            GROUP BY e.id, e.nombre
+            ORDER BY asistentes DESC
+            LIMIT 5
+        """)
+        stats["top_eventos"] = [{"nombre": r[0], "asistentes": r[1]} for r in cur.fetchall()]
+        
+        # 7. Top 5 lugares con más eventos
+        cur.execute("""
+            SELECT 
+                l.nombre,
+                COUNT(el.evento_id) as total_eventos
+            FROM lugar l
+            JOIN evento_lugar el ON el.lugar_id = l.id
+            GROUP BY l.id, l.nombre
+            ORDER BY total_eventos DESC
+            LIMIT 5
+        """)
+        stats["top_lugares"] = [{"nombre": r[0], "eventos": r[1]} for r in cur.fetchall()]
+        
+        # 8. Sección con más participación cultural
+        cur.execute("""
+            SELECT 
+                a.seccion,
+                COUNT(DISTINCT a.id) as total_asistentes
+            FROM asistente a
+            JOIN evento_asistente ea ON ea.asistente_id = a.id
+            WHERE a.seccion IS NOT NULL AND a.seccion > 0
+            GROUP BY a.seccion
+            ORDER BY total_asistentes DESC
+            LIMIT 1
+        """)
+        top_seccion = cur.fetchone()
+        if top_seccion:
+            stats["seccion_top"] = {
+                "seccion": str(top_seccion[0]),
+                "asistentes": top_seccion[1]
+            }
+        else:
+            stats["seccion_top"] = None
+        
+        # 9. Asistentes por mes (últimos 6 meses)
+        cur.execute("""
+            SELECT 
+                TO_CHAR(DATE_TRUNC('month', ea.created_at), 'YYYY-MM') as mes,
+                COUNT(DISTINCT ea.asistente_id) as asistentes
+            FROM evento_asistente ea
+            WHERE ea.created_at >= CURRENT_DATE - INTERVAL '6 months'
+            GROUP BY DATE_TRUNC('month', ea.created_at)
+            ORDER BY mes DESC
+        """)
+        stats["asistentes_por_mes"] = [{"mes": r[0], "asistentes": r[1]} for r in cur.fetchall()]
+        
+        # 10. Porcentaje de participación (asistentes únicos vs población estimada)
+        cur.execute("SELECT COUNT(DISTINCT asistente_id) FROM evento_asistente")
+        total_participantes = cur.fetchone()[0]
+        stats["tasa_participacion"] = round((total_participantes / stats["total_asistentes"] * 100), 1) if stats["total_asistentes"] > 0 else 0
+        
+        elapsed = (time.time() - start_time) * 1000
+        print(f" GET /api/dashboard/stats tomó: {elapsed:.2f} ms")
+        
+        return stats
+        
+    except Exception as e:
+        print(f" Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        return_conn(conn)
+
+
 @app.get("/api/secciones-geojson")
 async def get_secciones_geojson():
     return FileResponse("SECCIONES.geojson", media_type="application/json")

@@ -306,7 +306,7 @@ export class MapaEventosComponent implements OnInit {
           });
       },
       error: (error) => {
-        console.error('❌ Error cargando colores:', error);
+        console.error(' Error cargando colores:', error);
         this.cargandoSecciones = false;
         this.mostrarErrorSecciones();
       }

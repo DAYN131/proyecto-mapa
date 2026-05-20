@@ -1,71 +1,82 @@
-import { Component, AfterViewInit } from '@angular/core';
+// src/app/components/dashboard/dashboard.component.ts
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Chart, registerables } from 'chart.js';
+import { Router } from '@angular/router';
+import { DashboardService, DashboardStats } from '../../services/dashboard';
 import { PdfService } from '../../services/pdf';
-
-Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css'
+  styleUrls: ['./dashboard.css']
 })
-export class DashboardComponent implements AfterViewInit {
+export class DashboardComponent implements OnInit {
+  stats: DashboardStats | null = null;
+  loading: boolean = true;
+  errorMessage: string = '';
 
-  metricas = [
-    { label: 'Total eventos',  valor: 142,    tag: '+12 este mes',        tipo: 'up'      },
-    { label: 'Asistentes',     valor: '8,430', tag: '+5.2% vs anterior',  tipo: 'up'      },
-    { label: 'Ubicaciones',    valor: 24,     tag: 'en 6 municipios',     tipo: 'neutral' },
-    { label: 'Cancelados',     valor: 3,      tag: '-2 vs anterior',      tipo: 'down'    },
-  ];
+  constructor(
+    private dashboardService: DashboardService,
+    private cdr: ChangeDetectorRef,
+     private pdfService: PdfService, 
+    private router: Router
+  ) {}
 
-  eventos = [
-    { nombre: 'Festival de verano',   lugar: 'Parque central',   tipo: 'concierto', asistentes: 1200 },
-    { nombre: 'Feria artesanal',       lugar: 'Plaza mayor',     tipo: 'feria',      asistentes: 850  },
-    { nombre: 'Exposición fotografía', lugar: 'Museo regional',  tipo: 'cultural',   asistentes: 430  },
-    { nombre: 'Torneo de fútbol',      lugar: 'Estadio mpal.',   tipo: 'deportivo',  asistentes: 2100 },
-    { nombre: 'Noche de jazz',         lugar: 'Teatro del lago', tipo: 'concierto',  asistentes: 560  },
-  ];
-
-  constructor(private pdfService: PdfService) {}
-
-  exportarPDF() {
-    this.pdfService.generarReporte(this.metricas, this.eventos);
+  ngOnInit() {
+    this.cargarStats();
   }
 
-  ngAfterViewInit() {
-    new Chart('chartMes', {
-      type: 'bar',
-      data: {
-        labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-        datasets: [
-          { label: 'Realizados', data: [8,12,10,15,18,22,20,17,14,16,11,9], backgroundColor: '#1D9E75', borderRadius: 4 },
-          { label: 'Planeados',  data: [2,3,4,2,3,1,3,4,5,3,6,8],          backgroundColor: '#B5D4F4', borderRadius: 4 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: '#f0f0f0' } }
-        }
-      }
-    });
+  exportarPDF() {
+    if (this.stats) {
+      this.pdfService.generarReporteDashboard(this.stats);
+    }
+  }
 
-    new Chart('chartTipo', {
-      type: 'doughnut',
-      data: {
-        labels: ['Concierto','Feria','Cultural','Deportivo'],
-        datasets: [{ data: [38,27,21,14], backgroundColor: ['#1D9E75','#378ADD','#7F77DD','#EF9F27'], borderWidth: 0 }]
+  cargarStats() {
+    this.loading = true;
+    this.cdr.detectChanges();
+
+    this.dashboardService.getStats().subscribe({
+      next: (data) => {
+        this.stats = data;
+        this.loading = false;
+        this.cdr.detectChanges();
+        console.log(' Dashboard stats cargados:', data);
       },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        cutout: '68%'
+      error: (error) => {
+        console.error(' Error:', error);
+        this.errorMessage = 'Error al cargar estadísticas';
+        this.loading = false;
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  irAEventos() {
+    this.router.navigate(['/eventos']);
+  }
+
+  irALugares() {
+    this.router.navigate(['/lugares']);
+  }
+
+  irAAsistentes() {
+    this.router.navigate(['/asistentes']);
+  }
+
+  irAMapa() {
+    this.router.navigate(['/mapa-eventos']);
+  }
+
+  getMaxAsistentesMes(): number {
+    if (!this.stats || !this.stats.asistentes_por_mes.length) return 0;
+    return Math.max(...this.stats.asistentes_por_mes.map(m => m.asistentes));
+  }
+
+  getPorcentaje(parte: number, total: number): string {
+    if (total === 0) return '0%';
+    return `${Math.round((parte / total) * 100)}%`;
   }
 }
