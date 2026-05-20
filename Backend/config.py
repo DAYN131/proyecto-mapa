@@ -16,3 +16,6 @@ def load_config(filename='database.ini', section='postgresql'):
         raise Exception(f'Sección {section} no encontrada en el archivo {filename}')
         
     return config
+
+
+

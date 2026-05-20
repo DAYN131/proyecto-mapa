@@ -75,7 +75,7 @@ export class EventoService {
         return this.http.get<Evento>(`${this.apiUrl}/eventos/${id}`);
     }
 
-    // ✅ NUEVO MÉTODO: Obtener tipos para filtros
+
     getTiposParaFiltros(): Observable<TipoFiltro[]> {
         return this.http.get<TipoFiltro[]>(`${this.apiUrl}/tipos-para-filtros`);
     }
@@ -103,5 +103,10 @@ export class EventoService {
     // Obtener lugares (con coordenadas)
     getLugares(): Observable<Lugar[]> {
         return this.http.get<Lugar[]>(`${this.apiUrl}/lugares`);
+    }
+
+    // Obtener colores por sección electoral basado en asistentes únicos
+    getColoresSecciones(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/secciones-con-colores`);
     }
 }

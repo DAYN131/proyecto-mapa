@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from fastapi.responses import FileResponse
+import os
+import json
 
 app = FastAPI()
 
@@ -56,7 +58,89 @@ async def get_secciones_geojson():
     return FileResponse("SECCIONES.geojson", media_type="application/json")
 
 
-# Nuevo endpoint en backend
+@app.get("/api/secciones-con-colores")
+def get_secciones_con_colores():
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        # 1. Obtener asistentes por sección desde la base de datos
+        cur.execute("""
+            WITH asistentes_unicos_por_seccion AS (
+                SELECT 
+                    a.seccion as seccion_asistente,
+                    COUNT(DISTINCT a.id) as total_asistentes
+                FROM asistente a
+                JOIN evento_asistente ea ON ea.asistente_id = a.id
+                WHERE a.seccion IS NOT NULL AND a.seccion > 0
+                GROUP BY a.seccion
+            )
+            SELECT 
+                seccion_asistente,
+                total_asistentes
+            FROM asistentes_unicos_por_seccion
+            ORDER BY seccion_asistente
+        """)
+        asistentes_por_seccion = {}
+        for row in cur.fetchall():
+            asistentes_por_seccion[str(row[0])] = row[1]
+        
+        # 2. Cargar las secciones desde el GeoJSON
+        geojson_path = "SECCIONES.geojson"
+        if not os.path.exists(geojson_path):
+            raise HTTPException(status_code=404, detail="Archivo GeoJSON no encontrado")
+        
+        with open(geojson_path, 'r', encoding='utf-8') as f:
+            geojson = json.load(f)
+        
+        # 3. Procesar cada sección del GeoJSON
+        resultado = []
+        for feature in geojson.get('features', []):
+            properties = feature.get('properties', {})
+            seccion = str(properties.get('seccion', ''))
+            
+            if not seccion:
+                continue
+            
+            asistentes = asistentes_por_seccion.get(seccion, 0)
+            
+        # Determinar color y nivel según asistentes
+      
+            if asistentes == 0:
+                color = '#90a4ae'      # Gris azulado (frío, vacío)
+                nivel = 'Sin participación'
+            elif asistentes < 3:
+                color = '#42a5f5'      # Azul
+                nivel = 'Muy baja participación'
+            elif asistentes < 10:
+                color = '#26c6da'      # Cian
+                nivel = 'Baja participación'
+            elif asistentes < 25:
+                color = '#ffca28'      # Amarillo cálido
+                nivel = 'Participación media'
+            elif asistentes < 50:
+                color = '#ff7043'      # Naranja
+                nivel = 'Alta participación'
+            else:
+                color = '#e53935'      # Rojo intenso
+                nivel = 'Muy alta participación'
+
+            resultado.append({
+                "seccion": seccion,
+                "asistentes": asistentes,
+                "color": color,
+                "nivel": nivel
+            })
+        
+        print(f" Secciones procesadas: {len(resultado)}")
+        return resultado
+        
+    except Exception as e:
+        print(f" Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        return_conn(conn)
+
 @app.get("/api/tipos-para-filtros")
 def get_tipos_para_filtros():
     conn = get_conn()
